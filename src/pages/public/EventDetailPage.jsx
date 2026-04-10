@@ -7,6 +7,7 @@ import "./EventDetailPage.css";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "";
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+const APP_URL = import.meta.env.VITE_APP_URL || window.location.origin;
 
 export default function EventDetailPage() {
   const { id } = useParams();
@@ -55,7 +56,6 @@ export default function EventDetailPage() {
       setSubmitError("");
 
       try {
-        const origin = window.location.origin;
         const res = await fetch(`${SUPABASE_URL}/functions/v1/create-event-registration`, {
           method: "POST",
           headers: {
@@ -68,8 +68,8 @@ export default function EventDetailPage() {
             participantEmail: email.trim(),
             participantPhone: phone.trim(),
             paymentMethod: isFree ? "offline" : paymentMethod,
-            responseUrl: `${origin}/events/${id}?registered=true`,
-            cancelUrl: `${origin}/events/${id}?cancelled=true`,
+            responseUrl: `${APP_URL}/events/${id}?registered=true`,
+            cancelUrl: `${APP_URL}/events/${id}?cancelled=true`,
           }),
         });
 

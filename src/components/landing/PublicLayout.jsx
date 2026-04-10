@@ -52,6 +52,20 @@ export default function PublicLayout({ children }) {
               <Link key={link.to} to={link.to}>{link.label}</Link>
             ))}
           </div>
+          <div className="mp-footer-payments">
+            <span className="mp-pay-badge">
+              <span className="mp-pay-visa">VISA</span>
+            </span>
+            <span className="mp-pay-badge mp-pay-mc-badge">
+              <svg width="26" height="16" viewBox="0 0 26 16" fill="none"><circle cx="9" cy="8" r="7.5" fill="#EB001B"/><circle cx="17" cy="8" r="7.5" fill="#F79E1B"/><path d="M13 1.6a7.5 7.5 0 0 1 0 12.8 7.5 7.5 0 0 1 0-12.8z" fill="#FF5F00"/></svg>
+            </span>
+            <span className="mp-pay-badge">
+              <span className="mp-pay-gpay">G&nbsp;Pay</span>
+            </span>
+            <span className="mp-pay-badge">
+              <span className="mp-pay-applepay">&nbsp;Pay</span>
+            </span>
+          </div>
           <div className="mp-footer-copy">
             © {new Date().getFullYear()} {VENUE_NAME}. {t("footer_rights")}
           </div>

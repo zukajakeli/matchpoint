@@ -107,7 +107,8 @@ export default function ProductsAdminPage() {
         <div className="admin-field">
           <label>Image</label>
           <input type="file" accept="image/*" onChange={handleImageUpload} />
-          {image && <img src={image} alt="Preview" className="admin-image-preview" />}
+          <span className="admin-image-hint">Recommended: 1200 × 900 px (4:3 ratio). Min 800 × 600 px. JPG or PNG.</span>
+          {image && <img src={image} alt="Preview" className="admin-image-preview admin-image-preview-4-3" />}
         </div>
         <div className="admin-field">
           <label>Display Order</label>

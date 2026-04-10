@@ -89,14 +89,32 @@
   gap: 16px;
 }
 
+.admin-image-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: #6b7280;
+  font-weight: 400;
+  font-style: italic;
+}
+
 .admin-image-preview {
   display: block;
   margin-top: 8px;
-  max-width: 200px;
-  max-height: 120px;
+  max-width: 280px;
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid #d1d5db;
+}
+
+.admin-image-preview-4-3 {
+  aspect-ratio: 4 / 3;
+  width: 280px;
+}
+
+.admin-image-preview-16-9 {
+  aspect-ratio: 16 / 9;
+  width: 320px;
 }
 
 .admin-actions {

@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase, isSupabaseConfigured } from "../services/supabaseClient";
+import { useTranslation } from "../i18n/LanguageContext";
 import { loadVenueHours, DAY_NAMES } from "../utils/venueHours";
+import PublicLayout from "../components/landing/PublicLayout";
 import "./BookingPublicPage.css";
 
 const VENUE_NAME = import.meta.env.VITE_VENUE_NAME || "MatchPoint";
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "";
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+const APP_URL = import.meta.env.VITE_APP_URL || window.location.origin;
 
 const TABLE_COUNT = 12;
 
@@ -25,9 +28,6 @@ const DURATIONS = [
 ];
 
 // Build quarter-hour time slots for a given Date using the per-day venue hours.
-// A slot is disabled if:
-//   - it is less than 1 hour from now (lead time), OR
-//   - it has fewer than 60 minutes before venue close (can't fit minimum booking)
 function buildTimeSlots(selectedDate, venueHours) {
   const slots = [];
   const now = Date.now();
@@ -40,7 +40,6 @@ function buildTimeSlots(selectedDate, venueHours) {
       const slotDate = new Date(selectedDate);
       slotDate.setHours(h, m, 0, 0);
       const tooSoon = slotDate.getTime() - now < minLeadMs;
-      // minutes remaining from this slot until venue close
       const minutesToClose = close * 60 - (h * 60 + m);
       const tooCloseToClose = minutesToClose < 60;
       const hStr = String(h).padStart(2, "0");
@@ -56,7 +55,6 @@ function buildTimeSlots(selectedDate, venueHours) {
   return slots;
 }
 
-// Use LOCAL date components to avoid UTC-offset shifting the date string.
 function buildDateOptions() {
   const options = [];
   const today = new Date();
@@ -80,7 +78,6 @@ function buildDateOptions() {
   return options;
 }
 
-// Soft availability check — not authoritative; Edge Function does the final lock.
 async function checkAvailability(bookingAtISO, hoursCount) {
   if (!isSupabaseConfigured || !supabase) return TABLE_COUNT;
   const start = new Date(bookingAtISO);
@@ -106,6 +103,7 @@ async function checkAvailability(bookingAtISO, hoursCount) {
 }
 
 export default function BookingPublicPage() {
+  const { t } = useTranslation();
   const venueHours = loadVenueHours();
   const dateOptions = buildDateOptions();
 
@@ -125,7 +123,6 @@ export default function BookingPublicPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
-  // Parse the selected date as LOCAL midnight to avoid UTC-offset issues
   const selectedDateObj = selectedDate
     ? new Date(selectedDate + "T00:00:00")
     : new Date();
@@ -136,20 +133,17 @@ export default function BookingPublicPage() {
   const { open: openHour = 17, close: closeHour = 24 } = venueHours[dayOfWeek] || {};
   const closeLabel = closeHour === 24 ? "midnight" : `${String(closeHour).padStart(2, "0")}:00`;
 
-  // Auto-select first available time when date changes
   useEffect(() => {
     const firstAvailable = timeSlots.find((s) => !s.disabled);
     setSelectedTime(firstAvailable?.value || "");
   }, [selectedDate]);
 
-  // If the selected duration no longer fits the chosen slot, reset to the largest that fits
   useEffect(() => {
     if (availableDurations.length > 0 && !availableDurations.find((d) => d.value === duration)) {
       setDuration(availableDurations[availableDurations.length - 1].value);
     }
   }, [selectedTime]);
 
-  // Soft availability check whenever slot or duration changes
   useEffect(() => {
     if (!selectedDate || !selectedTime) return;
     const bookingAt = `${selectedDate}T${selectedTime}:00`;
@@ -164,7 +158,6 @@ export default function BookingPublicPage() {
   const selectedGame = GAME_TYPES.find((g) => g.value === gameType) || GAME_TYPES[0];
   const totalGel = tablesCount * duration * selectedGame.rate;
 
-  // Only show durations that fit before venue close for the selected time slot
   const selectedSlot = timeSlots.find((s) => s.value === selectedTime);
   const minutesToClose = selectedSlot?.minutesToClose ?? 60;
   const availableDurations = DURATIONS.filter((d) => d.value * 60 <= minutesToClose);
@@ -184,7 +177,6 @@ export default function BookingPublicPage() {
       setSubmitError("");
 
       const bookingAt = `${selectedDate}T${selectedTime}:00`;
-      const origin = window.location.origin;
 
       try {
         const res = await fetch(`${SUPABASE_URL}/functions/v1/create-booking-order`, {
@@ -201,8 +193,8 @@ export default function BookingPublicPage() {
             hoursCount: Number(duration),
             bookingAt,
             gameType,
-            responseUrl: `${origin}/book/success`,
-            cancelUrl: `${origin}/book/cancelled`,
+            responseUrl: `${APP_URL}/book/success`,
+            cancelUrl: `${APP_URL}/book/cancelled`,
           }),
         });
 
@@ -225,228 +217,218 @@ export default function BookingPublicPage() {
   );
 
   return (
-    <div className="booking-public-page">
-      <header className="booking-public-header">
-        <a href="/book" className="booking-public-logo">
-          <img src="/matchpoint-logo.png" alt={VENUE_NAME} />
-          <span>{VENUE_NAME}</span>
-        </a>
-      </header>
-
-      <main className="booking-public-main">
-        <div className="booking-public-card">
-          <h1>Book a Table</h1>
-          <p className="booking-public-subtitle">
-            Reserve your spot online and pay securely.
-            Open {String(openHour).padStart(2, "0")}:00 – {closeLabel} on {DAY_NAMES[dayOfWeek]}s.
+    <PublicLayout>
+      <div className="mp-booking-page">
+        <section className="mp-booking-hero">
+          <h1>{t("booking_title")}</h1>
+          <p>
+            {t("booking_subtitle_prefix")} {String(openHour).padStart(2, "0")}:00 – {closeLabel} {t("booking_subtitle_suffix")} {DAY_NAMES[dayOfWeek]}
           </p>
+        </section>
 
-          {/* Step indicators */}
-          <div className="booking-steps">
-            <div className={`booking-step ${step >= 1 ? "active" : ""}`}>
-              <span>1</span> Slot
+        <section className="mp-booking-content">
+          <div className="mp-booking-card">
+            {/* Step indicators */}
+            <div className="mp-booking-steps">
+              <div className={`mp-booking-step ${step >= 1 ? "active" : ""}`}>
+                <span>1</span> Slot
+              </div>
+              <div className="mp-booking-step-divider" />
+              <div className={`mp-booking-step ${step >= 2 ? "active" : ""}`}>
+                <span>2</span> Details
+              </div>
+              <div className="mp-booking-step-divider" />
+              <div className={`mp-booking-step ${step >= 3 ? "active" : ""}`}>
+                <span>3</span> Payment
+              </div>
             </div>
-            <div className="booking-step-divider" />
-            <div className={`booking-step ${step >= 2 ? "active" : ""}`}>
-              <span>2</span> Details
-            </div>
-            <div className="booking-step-divider" />
-            <div className={`booking-step ${step >= 3 ? "active" : ""}`}>
-              <span>3</span> Payment
-            </div>
-          </div>
 
-          {step === 1 && (
-            <form onSubmit={handleProceedToDetails} className="booking-form-grid">
-              {/* Date */}
-              <div className="booking-field">
-                <label>Date</label>
-                <select value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)}>
-                  {dateOptions.map((d) => (
-                    <option key={d.value} value={d.value}>
-                      {d.label}
+            {step === 1 && (
+              <form onSubmit={handleProceedToDetails} className="mp-booking-form">
+                {/* Date */}
+                <div className="mp-booking-field">
+                  <label>Date</label>
+                  <select value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)}>
+                    {dateOptions.map((d) => (
+                      <option key={d.value} value={d.value}>
+                        {d.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Time */}
+                <div className="mp-booking-field">
+                  <label>Start Time</label>
+                  <select
+                    value={selectedTime}
+                    onChange={(e) => setSelectedTime(e.target.value)}
+                    required
+                  >
+                    <option value="" disabled>
+                      Select time
                     </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Time */}
-              <div className="booking-field">
-                <label>Start Time</label>
-                <select
-                  value={selectedTime}
-                  onChange={(e) => setSelectedTime(e.target.value)}
-                  required
-                >
-                  <option value="" disabled>
-                    Select time
-                  </option>
-                  {timeSlots.map((s) => (
-                    <option key={s.value} value={s.value} disabled={s.disabled}>
-                      {s.label}
-                      {s.disabled ? " (unavailable)" : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Duration */}
-              <div className="booking-field">
-                <label>Duration</label>
-                <div className="booking-chip-group">
-                  {availableDurations.map((d) => (
-                    <button
-                      key={d.value}
-                      type="button"
-                      className={`booking-chip ${duration === d.value ? "selected" : ""}`}
-                      onClick={() => setDuration(d.value)}
-                    >
-                      {d.label}
-                    </button>
-                  ))}
+                    {timeSlots.map((s) => (
+                      <option key={s.value} value={s.value} disabled={s.disabled}>
+                        {s.label}
+                        {s.disabled ? " (unavailable)" : ""}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              </div>
 
-              {/* Game type */}
-              <div className="booking-field">
-                <label>Game Type</label>
-                <div className="booking-chip-group">
-                  {GAME_TYPES.map((g) => (
-                    <button
-                      key={g.value}
-                      type="button"
-                      className={`booking-chip ${gameType === g.value ? "selected" : ""}`}
-                      onClick={() => setGameType(g.value)}
-                    >
-                      {g.label}
-                      <small>{g.rate} ₾/hr</small>
-                    </button>
-                  ))}
+                {/* Duration */}
+                <div className="mp-booking-field">
+                  <label>Duration</label>
+                  <div className="mp-booking-chips">
+                    {availableDurations.map((d) => (
+                      <button
+                        key={d.value}
+                        type="button"
+                        className={`mp-booking-chip ${duration === d.value ? "selected" : ""}`}
+                        onClick={() => setDuration(d.value)}
+                      >
+                        {d.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Tables count */}
-              <div className="booking-field">
-                <label>
-                  Number of Tables
-                  {availabilityLoading ? (
-                    <span className="availability-tag loading">Checking…</span>
-                  ) : (
-                    <span className={`availability-tag ${availableTables > 0 ? "available" : "full"}`}>
-                      {availableTables} available
-                    </span>
-                  )}
-                </label>
-                <div className="booking-chip-group">
-                  {[1, 2, 3, 4, 5, 6].map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      className={`booking-chip ${tablesCount === n ? "selected" : ""} ${n > availableTables ? "disabled" : ""}`}
-                      disabled={n > availableTables}
-                      onClick={() => setTablesCount(n)}
-                    >
-                      {n}
-                    </button>
-                  ))}
+                {/* Game type */}
+                <div className="mp-booking-field">
+                  <label>Game Type</label>
+                  <div className="mp-booking-chips">
+                    {GAME_TYPES.map((g) => (
+                      <button
+                        key={g.value}
+                        type="button"
+                        className={`mp-booking-chip ${gameType === g.value ? "selected" : ""}`}
+                        onClick={() => setGameType(g.value)}
+                      >
+                        {g.label}
+                        <small>{g.rate} ₾/hr</small>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Price preview */}
-              <div className="booking-price-preview">
-                <div className="booking-price-row">
+                {/* Tables count */}
+                <div className="mp-booking-field">
+                  <label>
+                    Number of Tables
+                    {availabilityLoading ? (
+                      <span className="mp-booking-avail-tag loading">Checking…</span>
+                    ) : (
+                      <span className={`mp-booking-avail-tag ${availableTables > 0 ? "available" : "full"}`}>
+                        {availableTables} available
+                      </span>
+                    )}
+                  </label>
+                  <div className="mp-booking-chips">
+                    {[1, 2, 3, 4, 5, 6].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        className={`mp-booking-chip ${tablesCount === n ? "selected" : ""}`}
+                        disabled={n > availableTables}
+                        onClick={() => setTablesCount(n)}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Price preview */}
+                <div className="mp-booking-price">
                   <span>
                     {tablesCount} table{tablesCount > 1 ? "s" : ""} × {duration}h × {selectedGame.rate} ₾/hr
                   </span>
-                  <span className="booking-price-total">{totalGel} ₾</span>
+                  <span className="mp-booking-price-total">{totalGel} ₾</span>
                 </div>
-              </div>
 
-              {availableTables === 0 && (
-                <p className="booking-no-avail">
-                  No tables available for this slot. Please choose a different time.
-                </p>
-              )}
-
-              <button
-                type="submit"
-                className="booking-cta-btn"
-                disabled={!selectedTime || availableTables === 0}
-              >
-                Continue →
-              </button>
-            </form>
-          )}
-
-          {step === 2 && (
-            <form onSubmit={handlePayment} className="booking-form-grid">
-              <div className="booking-summary-box">
-                <p>
-                  <strong>{selectedGame.label}</strong> · {tablesCount} table
-                  {tablesCount > 1 ? "s" : ""} · {duration}h · {selectedDate} at {selectedTime}
-                </p>
-                <p className="booking-summary-price">{totalGel} ₾</p>
-                <button type="button" className="booking-edit-btn" onClick={() => setStep(1)}>
-                  ← Edit slot
-                </button>
-              </div>
-
-              <div className="booking-field">
-                <label>Full Name</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Your full name"
-                  required
-                />
-              </div>
-
-              <div className="booking-field">
-                <label>Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
-                />
-              </div>
-
-              <div className="booking-field">
-                <label>Phone Number</label>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+995 5xx xxx xxx"
-                  required
-                />
-              </div>
-
-              {submitError && <p className="booking-submit-error">{submitError}</p>}
-
-              <button type="submit" className="booking-cta-btn" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <span className="btn-spinner" aria-hidden="true" /> Redirecting to payment…
-                  </>
-                ) : (
-                  `Pay ${totalGel} ₾ →`
+                {availableTables === 0 && (
+                  <p className="mp-booking-no-avail">
+                    No tables available for this slot. Please choose a different time.
+                  </p>
                 )}
-              </button>
 
-              <p className="booking-secure-note">
-                Secured by Flitt · Your card data never touches our servers
-              </p>
-            </form>
-          )}
-        </div>
-      </main>
+                <button
+                  type="submit"
+                  className="mp-btn mp-btn-primary mp-booking-submit"
+                  disabled={!selectedTime || availableTables === 0}
+                >
+                  Continue
+                </button>
+              </form>
+            )}
 
-      <footer className="booking-public-footer">
-        © {new Date().getFullYear()} {VENUE_NAME}
-      </footer>
-    </div>
+            {step === 2 && (
+              <form onSubmit={handlePayment} className="mp-booking-form">
+                <div className="mp-booking-summary">
+                  <p>
+                    <strong>{selectedGame.label}</strong> · {tablesCount} table
+                    {tablesCount > 1 ? "s" : ""} · {duration}h · {selectedDate} at {selectedTime}
+                  </p>
+                  <p className="mp-booking-summary-price">{totalGel} ₾</p>
+                  <button type="button" className="mp-booking-edit-btn" onClick={() => setStep(1)}>
+                    Edit slot
+                  </button>
+                </div>
+
+                <div className="mp-booking-field">
+                  <label>{t("events_full_name")}</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder={t("events_full_name")}
+                    required
+                  />
+                </div>
+
+                <div className="mp-booking-field">
+                  <label>{t("events_email")}</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    required
+                  />
+                </div>
+
+                <div className="mp-booking-field">
+                  <label>{t("events_phone")}</label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+995 5xx xxx xxx"
+                    required
+                  />
+                </div>
+
+                {submitError && <p className="mp-booking-error">{submitError}</p>}
+
+                <button type="submit" className="mp-btn mp-btn-primary mp-booking-submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <span className="mp-booking-spinner" aria-hidden="true" /> Redirecting to payment…
+                    </>
+                  ) : (
+                    `Pay ${totalGel} ₾`
+                  )}
+                </button>
+
+                <p className="mp-booking-secure-note">
+                  Secured by Flitt · Your card data never touches our servers
+                </p>
+              </form>
+            )}
+          </div>
+        </section>
+      </div>
+    </PublicLayout>
   );
 }

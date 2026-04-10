@@ -226,7 +226,8 @@ export default function EventsAdminPage() {
           <div className="admin-field">
             <label>Event Image</label>
             <input type="file" accept="image/*" onChange={handleImageUpload} />
-            {image && <img src={image} alt="Preview" className="admin-image-preview" />}
+            <span className="admin-image-hint">Recommended: 1600 × 900 px (16:9 ratio). Min 1200 × 675 px. JPG or PNG.</span>
+            {image && <img src={image} alt="Preview" className="admin-image-preview admin-image-preview-16-9" />}
           </div>
           <div className="admin-field-row-2">
             <div className="admin-field">

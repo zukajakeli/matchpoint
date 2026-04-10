@@ -143,6 +143,65 @@
   color: var(--mp-lime);
 }
 
+.mp-footer-payments {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.mp-pay-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 0 10px;
+  background: #fff;
+  border-radius: 5px;
+  min-width: 48px;
+}
+
+/* Visa */
+.mp-pay-visa {
+  font-size: 0.95rem;
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 1px;
+  color: #1a1f71;
+  font-family: "Poppins", sans-serif;
+}
+
+/* Mastercard — uses inline SVG, no extra text styling needed */
+.mp-pay-mc-badge {
+  padding: 0 6px;
+}
+
+/* Google Pay */
+.mp-pay-gpay {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #3c4043;
+  font-family: "Poppins", sans-serif;
+  letter-spacing: -0.3px;
+}
+
+/* Apple Pay —  symbol + Pay */
+.mp-pay-applepay {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #000;
+  font-family: -apple-system, BlinkMacSystemFont, "Poppins", sans-serif;
+  letter-spacing: -0.3px;
+}
+
+.mp-pay-applepay::before {
+  content: "\f8ff";
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 1rem;
+  vertical-align: -1px;
+}
+
 .mp-footer-copy {
   font-size: 0.8rem;
   opacity: 0.5;
