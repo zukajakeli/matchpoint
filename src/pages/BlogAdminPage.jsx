@@ -225,7 +225,7 @@ export default function BlogAdminPage() {
                         {p.is_published ? "Published" : "Draft"}
                       </button>
                     </td>
-                    <td>{p.published_at ? new Date(p.published_at).toLocaleDateString() : "—"}</td>
+                    <td>{p.published_at ? new Date(p.published_at).toLocaleDateString("en-GB", { timeZone: "Asia/Tbilisi" }) : "—"}</td>
                     <td>
                       <button onClick={() => handleEdit(p)} className="admin-btn admin-btn-sm">Edit</button>
                       <button onClick={() => handleDelete(p.id)} className="admin-btn admin-btn-sm admin-btn-danger">Delete</button>

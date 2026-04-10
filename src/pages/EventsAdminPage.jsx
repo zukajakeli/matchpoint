@@ -192,7 +192,7 @@ export default function EventsAdminPage() {
                           {r.payment_status}
                         </span>
                       </td>
-                      <td>{new Date(r.created_at).toLocaleDateString()}</td>
+                      <td>{new Date(r.created_at).toLocaleDateString("en-GB", { timeZone: "Asia/Tbilisi" })}</td>
                       <td>
                         {r.payment_status !== "paid" && (
                           <button onClick={() => handleMarkPaid(r.id)} className="admin-btn admin-btn-sm">Mark Paid</button>
@@ -291,7 +291,7 @@ export default function EventsAdminPage() {
                     <tr key={ev.id}>
                       <td>{ev.image && <img src={ev.image} alt="" className="admin-thumb" />}</td>
                       <td><strong>{ev.title}</strong></td>
-                      <td>{new Date(ev.event_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</td>
+                      <td>{new Date(ev.event_date).toLocaleDateString("en-GB", { timeZone: "Asia/Tbilisi", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</td>
                       <td>{ev.entry_fee > 0 ? `${ev.entry_fee} ₾` : "Free"}</td>
                       <td>{ev.max_participants || "∞"}</td>
                       <td>

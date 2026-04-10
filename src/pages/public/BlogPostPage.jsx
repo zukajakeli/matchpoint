@@ -66,6 +66,7 @@ export default function BlogPostPage() {
             <span>
               {post.published_at &&
                 new Date(post.published_at).toLocaleDateString(dateLang, {
+                  timeZone: "Asia/Tbilisi",
                   day: "numeric",
                   month: "long",
                   year: "numeric",

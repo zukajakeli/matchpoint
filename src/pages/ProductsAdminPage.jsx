@@ -5,6 +5,7 @@ import "./AdminPages.css";
 export default function ProductsAdminPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
   // Form state
@@ -28,6 +29,7 @@ export default function ProductsAdminPage() {
 
   const resetForm = () => {
     setEditingId(null);
+    setShowForm(false);
     setTitle("");
     setSubtitle("");
     setDescription("");
@@ -45,6 +47,7 @@ export default function ProductsAdminPage() {
 
   const handleEdit = (p) => {
     setEditingId(p.id);
+    setShowForm(true);
     setTitle(p.title);
     setSubtitle(p.subtitle || "");
     setDescription(p.description || "");
@@ -90,39 +93,45 @@ export default function ProductsAdminPage() {
     <div className="admin-page">
       <h2>Manage Products & Services</h2>
 
-      <form onSubmit={handleSubmit} className="admin-form">
-        <h3>{editingId ? "Edit Product" : "Add Product"}</h3>
-        <div className="admin-field">
-          <label>Title</label>
-          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="e.g. Table Rental" />
-        </div>
-        <div className="admin-field">
-          <label>Subtitle</label>
-          <input type="text" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} placeholder="Short tagline" />
-        </div>
-        <div className="admin-field">
-          <label>Description (HTML supported)</label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} placeholder="Full description..." />
-        </div>
-        <div className="admin-field">
-          <label>Image</label>
-          <input type="file" accept="image/*" onChange={handleImageUpload} />
-          <span className="admin-image-hint">Recommended: 1200 × 900 px (4:3 ratio). Min 800 × 600 px. JPG or PNG.</span>
-          {image && <img src={image} alt="Preview" className="admin-image-preview admin-image-preview-4-3" />}
-        </div>
-        <div className="admin-field">
-          <label>Display Order</label>
-          <input type="number" value={displayOrder} onChange={(e) => setDisplayOrder(Number(e.target.value))} />
-        </div>
-        <div className="admin-actions">
-          <button type="submit" className="admin-btn admin-btn-primary">
-            {editingId ? "Save Changes" : "Add Product"}
-          </button>
-          {editingId && (
+      {!showForm && (
+        <button onClick={() => setShowForm(true)} className="admin-btn admin-btn-primary" style={{ marginBottom: 24 }}>
+          + Add New Product
+        </button>
+      )}
+
+      {showForm && (
+        <form onSubmit={handleSubmit} className="admin-form">
+          <h3>{editingId ? "Edit Product" : "Add Product"}</h3>
+          <div className="admin-field">
+            <label>Title</label>
+            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="e.g. Table Rental" />
+          </div>
+          <div className="admin-field">
+            <label>Subtitle</label>
+            <input type="text" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} placeholder="Short tagline" />
+          </div>
+          <div className="admin-field">
+            <label>Description (HTML supported)</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} placeholder="Full description..." />
+          </div>
+          <div className="admin-field">
+            <label>Image</label>
+            <input type="file" accept="image/*" onChange={handleImageUpload} />
+            <span className="admin-image-hint">Recommended: 1200 × 900 px (4:3 ratio). Min 800 × 600 px. JPG or PNG.</span>
+            {image && <img src={image} alt="Preview" className="admin-image-preview admin-image-preview-4-3" />}
+          </div>
+          <div className="admin-field">
+            <label>Display Order</label>
+            <input type="number" value={displayOrder} onChange={(e) => setDisplayOrder(Number(e.target.value))} />
+          </div>
+          <div className="admin-actions">
+            <button type="submit" className="admin-btn admin-btn-primary">
+              {editingId ? "Save Changes" : "Add Product"}
+            </button>
             <button type="button" onClick={resetForm} className="admin-btn admin-btn-secondary">Cancel</button>
-          )}
-        </div>
-      </form>
+          </div>
+        </form>
+      )}
 
       <div className="admin-list">
         <h3>All Products ({products.length})</h3>

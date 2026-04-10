@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import BookingForm from "../components/bookings/BookingForm";
 import BookingList from "../components/bookings/BookingList";
-import { AdminLogoutButton } from "../components/admin/AdminAuthGate";
 import {
   createBooking,
   deleteBooking,
@@ -82,7 +81,8 @@ export default function BookingsPage() {
         customerName: bookingName.trim(),
         tablesCount: Number(tablesCount),
         hoursCount: hoursCount === "" ? null : Number(hoursCount),
-        bookingAt: bookingDateTime ? new Date(bookingDateTime).toISOString() : null,
+        // Pin datetime-local value to Tbilisi timezone (UTC+4)
+        bookingAt: bookingDateTime ? `${bookingDateTime}:00+04:00` : null,
       });
       setBookings((prev) => {
         if (prev.some((b) => b.id === created.id)) return prev;
@@ -151,7 +151,6 @@ export default function BookingsPage() {
     <div className="bookings-page">
       <div className="bookings-page-header">
         <h1>Bookings</h1>
-        <AdminLogoutButton />
       </div>
 
       {/* Stats bar */}

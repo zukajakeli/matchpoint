@@ -31,7 +31,7 @@ const SessionHistory = ({ history }) => {
             {history.slice().reverse().map(session => ( // .slice().reverse() to show newest first without mutating
               <tr key={session.id}>
                 <td>{session.tableName}</td>
-                <td>{new Date(session.endTime).toLocaleString()}</td>
+                <td>{new Date(session.endTime).toLocaleString("en-GB", { timeZone: "Asia/Tbilisi" })}</td>
                 <td>{formatTime(session.durationPlayed)}</td>
                 <td>{session.amountPaid} GEL</td>
                 <td>{session.sessionType}</td>

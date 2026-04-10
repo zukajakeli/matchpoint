@@ -25,6 +25,7 @@ function SourceBadge({ source }) {
 function formatDateTime(iso) {
   if (!iso) return "—";
   return new Date(iso).toLocaleString("en-GB", {
+    timeZone: "Asia/Tbilisi",
     day: "numeric",
     month: "short",
     hour: "2-digit",

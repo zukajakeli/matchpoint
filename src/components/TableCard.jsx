@@ -35,7 +35,7 @@ function getSoonestBooking(upcomingBookings, gameType) {
 
 function formatShortTime(isoString) {
   if (!isoString) return "";
-  return new Date(isoString).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  return new Date(isoString).toLocaleTimeString("en-GB", { timeZone: "Asia/Tbilisi", hour: "2-digit", minute: "2-digit" });
 }
 
 const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggleAvailability, onTransferTimer, upcomingBookings }) => {

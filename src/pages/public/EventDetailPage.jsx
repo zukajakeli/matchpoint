@@ -132,6 +132,7 @@ export default function EventDetailPage() {
             <div className="mp-event-detail-meta">
               <span className="mp-event-detail-date-tag">
                 {new Date(event.event_date).toLocaleDateString(dateLang, {
+                  timeZone: "Asia/Tbilisi",
                   weekday: "long",
                   day: "numeric",
                   month: "long",

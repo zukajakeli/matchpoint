@@ -15,6 +15,7 @@ const GAME_LABELS = {
 function formatLocalDateTime(isoString) {
   if (!isoString) return "—";
   return new Date(isoString).toLocaleString("en-GB", {
+    timeZone: "Asia/Tbilisi",
     weekday: "short",
     day: "numeric",
     month: "short",

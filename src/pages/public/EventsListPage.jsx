@@ -81,6 +81,7 @@ function EventCard({ event: ev, isPast, dateLang, t }) {
       <div className="mp-events-list-card-info">
         <span className="mp-events-list-date">
           {new Date(ev.event_date).toLocaleDateString(dateLang, {
+            timeZone: "Asia/Tbilisi",
             weekday: "long",
             day: "numeric",
             month: "long",

@@ -92,7 +92,7 @@ export default function LandingPage() {
                 )}
                 <div className="mp-event-info">
                   <span className="mp-event-date">
-                    {new Date(ev.event_date).toLocaleDateString(dateLang, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    {new Date(ev.event_date).toLocaleDateString(dateLang, { timeZone: "Asia/Tbilisi", weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                   </span>
                   <h3>{ev.title}</h3>
                   {ev.entry_fee > 0 && <span className="mp-event-fee">{ev.entry_fee} ₾ {t("events_entry")}</span>}
@@ -122,7 +122,7 @@ export default function LandingPage() {
                   <h3>{post.title}</h3>
                   {post.excerpt && <p>{post.excerpt}</p>}
                   <span className="mp-blog-date">
-                    {post.published_at && new Date(post.published_at).toLocaleDateString(dateLang, { day: "numeric", month: "short", year: "numeric" })}
+                    {post.published_at && new Date(post.published_at).toLocaleDateString(dateLang, { timeZone: "Asia/Tbilisi", day: "numeric", month: "short", year: "numeric" })}
                   </span>
                 </div>
               </Link>

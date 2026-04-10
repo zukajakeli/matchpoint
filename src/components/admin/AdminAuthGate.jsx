@@ -94,6 +94,8 @@ export default function AdminAuthGate({ role = "superadmin", children }) {
 }
 
 export function AdminLogoutButton({ role = "superadmin" }) {
+  const [showConfirm, setShowConfirm] = useState(false);
+
   const handleLogout = () => {
     try {
       sessionStorage.removeItem(storageKey(role));
@@ -103,9 +105,40 @@ export function AdminLogoutButton({ role = "superadmin" }) {
     window.location.reload();
   };
 
+  // Close popover on outside click
+  React.useEffect(() => {
+    if (!showConfirm) return;
+    const handler = (e) => {
+      if (!e.target.closest(".logout-popover-wrapper")) {
+        setShowConfirm(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showConfirm]);
+
   return (
-    <button onClick={handleLogout} className="admin-logout-btn" title="Log out">
-      Log out
-    </button>
+    <div className="logout-popover-wrapper">
+      <button
+        onClick={() => setShowConfirm((v) => !v)}
+        className="admin-logout-btn"
+        title="Log out"
+      >
+        Log out
+      </button>
+      {showConfirm && (
+        <div className="logout-popover">
+          <p>Sure you want to log out?</p>
+          <div className="logout-popover-actions">
+            <button className="logout-confirm-btn" onClick={handleLogout}>
+              Yes, log out
+            </button>
+            <button className="logout-cancel-btn" onClick={() => setShowConfirm(false)}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

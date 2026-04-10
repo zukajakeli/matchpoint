@@ -1,8 +1,9 @@
+/* ── Bar Menu Grid · MatchPoint Bold & Premium ───────────────────── */
 .menu {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-  gap:10px;
-  padding-bottom:40px;
+  gap: 10px;
+  padding-bottom: 40px;
 }
 
 .sidebar-loading {
@@ -11,29 +12,28 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px;
-  border: 2px solid var(--text-dark);
-  border-radius: 6px;
-  background-color: var(--neutral-off-white);
-  box-shadow: 3px 3px 0px var(--text-dark);
+  padding: 16px;
+  border: 1px solid var(--mp-gray-light, #e5e7eb);
+  border-radius: 12px;
+  background: var(--mp-off-white, #f0f2f5);
   font-weight: 600;
+  color: var(--mp-navy, #14243e);
 }
 
 .sidebar-spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(33, 37, 41, 0.35);
-  border-top-color: var(--text-dark);
+  width: 16px;
+  height: 16px;
+  border: 2.5px solid rgba(28, 63, 186, 0.2);
+  border-top-color: var(--mp-blue, #1c3fba);
   border-radius: 50%;
   animation: sidebar-spin 0.7s linear infinite;
 }
 
 @keyframes sidebar-spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
+/* ── Sidebar Panel ───────────────────────────────────────────────── */
 .sidebar {
   position: fixed;
   top: 0;
@@ -41,80 +41,83 @@
   width: 400px;
   height: 100%;
   background: #fff;
-  border-left: 2px solid #ccc;
-  padding: 16px;
+  border-left: none;
+  padding: 20px;
   overflow-y: auto;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   z-index: 1000;
+  box-shadow: -8px 0 40px rgba(20, 36, 62, 0.15);
 }
 
+/* ── Toggle Button ───────────────────────────────────────────────── */
 .sidebar-toggle-btn {
   font-family: var(--font-family);
-    font-weight: 600;
-    font-size: 1em;
-    text-transform: uppercase;
-    padding: 8px 12px;
-    border-radius: 4px;
-    border: 3px solid var(--text-dark);
-    cursor: pointer;
-    transition: all 0.15s ease-out;
-    box-shadow: 4px 4px 0px var(--text-dark);
-    background-color: var(--accent-yellow);
-    color: var(--text-dark);
-    text-decoration: none;
-    display: block;
-    width: 150px;
-    text-align: center;
-    margin:0 auto;
+  font-weight: 700;
+  font-size: 0.88rem;
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  background: linear-gradient(135deg, var(--mp-navy, #14243e), var(--mp-navy-light, #1a2f50));
+  color: var(--mp-lime, #d5f296);
+  text-decoration: none;
+  display: block;
+  width: 170px;
+  text-align: center;
+  margin: 0 auto;
+  box-shadow: 0 4px 16px rgba(20, 36, 62, 0.25);
+  letter-spacing: 0.3px;
 }
+
 .sidebar-toggle-btn:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: 6px 6px 0px var(--text-dark);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 28px rgba(20, 36, 62, 0.35);
 }
 
 .sidebar-toggle-btn:active {
-    transform: translate(2px, 2px);
-    box-shadow: 2px 2px 0px var(--text-dark);
+  transform: translateY(1px) scale(0.98);
 }
 
+/* ── Close Button ────────────────────────────────────────────────── */
 .closeButton {
   font-family: var(--font-family);
-    font-weight: 600;
-    font-size: 0.7em;
-    text-transform: uppercase;
-    padding: 5px;
-    border-radius: 4px;
-    border: 3px solid var(--text-dark);
-    cursor: pointer;
-    transition: all 0.15s ease-out;
-    box-shadow: 4px 4px 0px var(--text-dark);
-    background-color: var(--table-ready-text);
-    color: var(--text-dark);
-    text-decoration: none;
-    display: block;
-    text-align: center;
-    margin-bottom: 10px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 2px solid var(--mp-gray-light, #e5e7eb);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #fff;
+  color: var(--mp-navy, #14243e);
+  text-decoration: none;
+  display: block;
+  text-align: center;
+  margin-bottom: 14px;
 }
+
 .closeButton:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: 6px 6px 0px var(--text-dark);
+  background: rgba(239, 68, 68, 0.08);
+  border-color: #fca5a5;
+  color: #dc2626;
+  transform: translateY(-1px);
 }
 
 .closeButton:active {
-    transform: translate(2px, 2px);
-    box-shadow: 2px 2px 0px var(--text-dark);
+  transform: translateY(1px);
 }
 
+/* ── Mobile ──────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .sidebar {
     left: 0;
     right: 0;
     width: 100vw;
-    padding: 10px;
-    border-left: none;
-    border-top: 3px solid var(--text-dark);
-    box-shadow: 0 -4px 0 var(--text-dark);
-    background: #f8f9fa;
+    padding: 14px;
+    border-top: 2px solid var(--mp-lime, #d5f296);
+    box-shadow: 0 -12px 40px rgba(20, 36, 62, 0.2);
+    background: #fff;
   }
 
   .menu {
@@ -132,7 +135,7 @@
   .sidebar-toggle-btn {
     width: 100%;
     max-width: 220px;
-    font-size: 0.85em;
-    padding: 8px;
+    font-size: 0.85rem;
+    padding: 10px;
   }
 }

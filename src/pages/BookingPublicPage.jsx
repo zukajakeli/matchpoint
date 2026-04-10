@@ -146,7 +146,8 @@ export default function BookingPublicPage() {
 
   useEffect(() => {
     if (!selectedDate || !selectedTime) return;
-    const bookingAt = `${selectedDate}T${selectedTime}:00`;
+    // Pin to Tbilisi timezone (UTC+4) so the server interprets correctly
+    const bookingAt = `${selectedDate}T${selectedTime}:00+04:00`;
     setAvailabilityLoading(true);
     checkAvailability(bookingAt, duration).then((n) => {
       setAvailableTables(n);
@@ -176,7 +177,8 @@ export default function BookingPublicPage() {
       setIsSubmitting(true);
       setSubmitError("");
 
-      const bookingAt = `${selectedDate}T${selectedTime}:00`;
+      // Pin to Tbilisi timezone (UTC+4) so the server interprets correctly
+      const bookingAt = `${selectedDate}T${selectedTime}:00+04:00`;
 
       try {
         const res = await fetch(`${SUPABASE_URL}/functions/v1/create-booking-order`, {

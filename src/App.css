@@ -1,29 +1,43 @@
-/* src/App.css */
+/* src/App.css — MatchPoint Admin · Bold & Premium */
 :root {
-  /* Color Palette from the Image */
-  --primary-blue: #4263eb;
-  --primary-blue-dark: #364fc7;
-  --primary-blue-active: #1c2f8b;
-  --accent-yellow: #ffdd00;
-  --neutral-white: #ffffff;
-  --neutral-off-white: #f8f9fa;
-  --neutral-gray: #ced4da;
+  /* ── MatchPoint Brand Palette ── */
+  --mp-blue: #1c3fba;
+  --mp-blue-light: #2a52d4;
+  --mp-blue-dark: #142d8a;
+  --mp-navy: #14243e;
+  --mp-navy-light: #1a2f50;
+  --mp-lime: #d5f296;
+  --mp-lime-dark: #b8d46e;
+  --mp-white: #ffffff;
+  --mp-off-white: #f0f2f5;
+  --mp-gray: #6b7280;
+  --mp-gray-light: #e5e7eb;
+  --mp-gray-lighter: #f3f4f6;
+
+  /* Legacy aliases — keeps table card themes working */
+  --primary-blue: var(--mp-blue);
+  --primary-blue-dark: var(--mp-blue-dark);
+  --primary-blue-active: #162e7a;
+  --accent-yellow: var(--mp-lime);
+  --neutral-white: var(--mp-white);
+  --neutral-off-white: var(--mp-off-white);
+  --neutral-gray: var(--mp-gray-light);
   --text-light: #ffffff;
-  --text-dark: #212529;
+  --text-dark: var(--mp-navy);
+  --neutral-light-gray: var(--mp-gray-lighter);
 
   --table-ready-bg: #fff5f5;
   --table-ready-border: #ff6b6b;
   --table-ready-text: #cf4040;
 
-  /* Font */
   --font-family: "Poppins", sans-serif;
 }
 
 body {
   font-family: var(--font-family);
   margin: 0;
-  background-color: var(--neutral-off-white);
-  color: var(--text-dark);
+  background: var(--mp-off-white);
+  color: var(--mp-navy);
 }
 
 .app {
@@ -32,110 +46,91 @@ body {
   min-height: 100vh;
 }
 
+/* ── Admin Header ───────────────────────────────────────────────────── */
 .app-header {
-  background-color: var(--primary-blue);
+  background: linear-gradient(135deg, var(--mp-navy) 0%, var(--mp-navy-light) 100%);
   color: var(--text-light);
-  padding: 20px;
-  text-align: center;
-  border-bottom: 5px solid var(--primary-blue-dark);
+  padding: 0 24px;
+  border-bottom: 2px solid var(--mp-lime);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
+
 .logo {
-  color:white;
+  color: white;
   text-decoration: none;
 }
 
 .app-header h1 {
   margin: 0;
-  font-size: 2em;
-  font-weight: 700;
-  letter-spacing: 1px;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  padding: 16px 0;
 }
 
 .header-logo-image {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   object-fit: cover;
-  border-radius: 50%;
+  border-radius: 10px;
+  border: 2px solid var(--mp-lime);
+  box-shadow: 0 0 12px rgba(213, 242, 150, 0.3);
 }
 
-.main-content {
-  flex-grow: 1;
-  padding: 20px;
-}
-
-.tables-grid {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 16px;
-  max-width: 1800px;
-  margin: 0 auto;
-}
-
-.app-footer {
-  background-color: var(--text-dark);
-  color: var(--neutral-off-white);
-  text-align: center;
-  padding: 15px;
-  font-size: 0.9em;
-  border-top: 5px solid var(--accent-yellow);
-}
-
+/* ── Nav Links ──────────────────────────────────────────────────────── */
 .nav-container {
   display: flex;
-  max-width:800px;
-  margin:5px auto;
-}
-.analyticsButton {
-    font-family: var(--font-family);
-    font-weight: 600;
-    font-size: 1em;
-    text-transform: uppercase;
-    padding: 8px 12px;
-    border-radius: 4px;
-    border: 3px solid var(--text-dark);
-    cursor: pointer;
-    transition: all 0.15s ease-out;
-    box-shadow: 4px 4px 0px var(--text-dark);
-    background-color: var(--accent-yellow);
-    color: var(--text-dark);
-    text-decoration: none;
-    display: block;
-    width: 150px;
-    text-align: center;
-    margin:0 auto;
-}
-
-.analyticsButton:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: 6px 6px 0px var(--text-dark);
-}
-
-.analyticsButton:active {
-    transform: translate(2px, 2px);
-    box-shadow: 2px 2px 0px var(--text-dark);
+  align-items: center;
+  gap: 6px;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 10px 0 16px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .nav-link {
-    font-family: var(--font-family);
-    font-weight: 600;
-    font-size: 1em;
-    text-transform: uppercase;
-    padding: 8px 12px;
-    border-radius: 4px;
-    border: 3px solid var(--text-dark);
-    cursor: pointer;
-    transition: all 0.15s ease-out;
-    box-shadow: 4px 4px 0px var(--text-dark);
-    background-color: var(--table-ready-text);
-    color: var(--text-dark);
-    text-decoration: none;
-    display: block;
-    width: 150px;
-    text-align: center;
-    margin:0 auto;
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 0.82rem;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  text-align: center;
+  box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  margin: 0;
+}
+
+.nav-link:hover {
+  background: rgba(213, 242, 150, 0.12);
+  border-color: rgba(213, 242, 150, 0.3);
+  color: var(--mp-lime);
+  transform: translateY(-1px);
+}
+
+.nav-link.home-link {
+  background: rgba(213, 242, 150, 0.15);
+  color: var(--mp-lime);
+  border-color: rgba(213, 242, 150, 0.25);
+  font-weight: 700;
+}
+
+.nav-link.home-link:hover {
+  background: rgba(213, 242, 150, 0.25);
+  box-shadow: 0 0 16px rgba(213, 242, 150, 0.15);
 }
 
 .nav-link-with-badge {
@@ -144,47 +139,97 @@ body {
 
 .booking-count-badge {
   position: absolute;
-  top: -10px;
-  right: -8px;
-  min-width: 20px;
-  height: 20px;
+  top: -7px;
+  right: -7px;
+  min-width: 18px;
+  height: 18px;
   border-radius: 999px;
-  background: var(--accent-yellow);
-  border: 2px solid var(--text-dark);
-  color: var(--text-dark);
-  font-size: 0.72rem;
-  line-height: 16px;
+  background: var(--mp-lime);
+  border: 2px solid var(--mp-navy);
+  color: var(--mp-navy);
+  font-size: 0.68rem;
+  line-height: 14px;
   text-align: center;
-  font-weight: 700;
-  box-shadow: 2px 2px 0px var(--text-dark);
+  font-weight: 800;
   padding: 0 4px;
+  animation: badge-pop 0.3s ease;
 }
 
-.nav-link:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: 6px 6px 0px var(--text-dark);
+@keyframes badge-pop {
+  0% { transform: scale(0); }
+  70% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }
 
-.nav-link:active {
-    transform: translate(2px, 2px);
-    box-shadow: 2px 2px 0px var(--text-dark);
-}
-.home-link {
-  background-color: var(--table-ready-bg);
+/* ── Main Content ───────────────────────────────────────────────────── */
+.main-content {
+  flex-grow: 1;
+  padding: 28px 24px;
+  background: linear-gradient(180deg, rgba(20, 36, 62, 0.03) 0%, transparent 300px);
 }
 
+/* ── Tables Grid ────────────────────────────────────────────────────── */
+.tables-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 16px;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+
+/* ── Analytics Button ───────────────────────────────────────────────── */
+.analyticsButton {
+  font-family: var(--font-family);
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  background: linear-gradient(135deg, var(--mp-blue) 0%, var(--mp-blue-light) 100%);
+  color: #fff;
+  text-decoration: none;
+  display: block;
+  width: 170px;
+  text-align: center;
+  margin: 0 auto;
+  box-shadow: 0 4px 16px rgba(28, 63, 186, 0.3);
+}
+
+.analyticsButton:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(28, 63, 186, 0.4);
+}
+
+.analyticsButton:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* ── Footer ─────────────────────────────────────────────────────────── */
+.app-footer {
+  background: var(--mp-navy);
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  padding: 14px;
+  font-size: 0.82rem;
+  border-top: 1px solid rgba(213, 242, 150, 0.15);
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .app-header {
-    padding: 12px 10px;
+    padding: 0 16px;
   }
 
   .app-header h1 {
-    font-size: 1.25rem;
+    font-size: 1.05rem;
     line-height: 1.3;
+    padding: 12px 0;
   }
 
   .main-content {
-    padding: 12px;
+    padding: 16px;
   }
 
   .tables-grid {
@@ -194,22 +239,16 @@ body {
   }
 
   .nav-container {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
+    gap: 6px;
     max-width: 100%;
+    padding: 8px 0 12px;
   }
 
   .nav-link,
   .sidebar-toggle-btn {
-    width: calc(50% - 8px);
-    min-width: 132px;
-    font-size: 0.78em;
-    padding: 7px 8px;
-  }
-
-  .booking-count-badge {
-    top: -8px;
-    right: -6px;
+    font-size: 0.75rem;
+    padding: 7px 10px;
+    width: auto;
+    min-width: auto;
   }
 }

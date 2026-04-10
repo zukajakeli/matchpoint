@@ -1,7 +1,11 @@
+/* ── Admin Login Gate · Bold & Premium ────────────────────────────── */
 .admin-gate-overlay {
   position: fixed;
   inset: 0;
-  background: var(--primary-dark, #1a2236);
+  background:
+    radial-gradient(ellipse at 20% 80%, rgba(28, 63, 186, 0.25) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(213, 242, 150, 0.1) 0%, transparent 50%),
+    linear-gradient(160deg, #0a1628 0%, #14243e 50%, #1a2f50 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -9,53 +13,80 @@
 }
 
 .admin-gate-card {
-  background: var(--neutral-white, #fff);
-  border: 3px solid var(--text-dark, #1a2236);
-  border-radius: 12px;
-  box-shadow: 10px 10px 0 var(--text-dark, #1a2236);
-  padding: 40px 36px 32px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(213, 242, 150, 0.2);
+  border-radius: 24px;
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.35),
+    0 0 40px rgba(28, 63, 186, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  padding: 48px 40px 40px;
   width: 100%;
-  max-width: 380px;
+  max-width: 400px;
   text-align: center;
+  animation: gate-float-in 0.5s ease-out;
+}
+
+@keyframes gate-float-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .admin-gate-logo img {
-  height: 48px;
-  margin-bottom: 12px;
+  height: 56px;
+  margin-bottom: 16px;
   object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(28, 63, 186, 0.2));
 }
 
 .admin-gate-card h2 {
-  margin: 0 0 6px;
-  font-size: 1.5rem;
-  color: var(--text-dark, #1a2236);
+  margin: 0 0 4px;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--mp-navy);
+  letter-spacing: -0.3px;
 }
 
 .admin-gate-card p {
-  margin: 0 0 20px;
-  color: #64748b;
-  font-size: 0.95rem;
+  margin: 0 0 28px;
+  color: var(--mp-gray);
+  font-size: 0.9rem;
 }
 
 .admin-gate-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .admin-gate-input {
-  padding: 12px 14px;
-  border: 3px solid var(--text-dark, #1a2236);
-  border-radius: 6px;
+  padding: 14px 18px;
+  border: 2px solid var(--mp-gray-light);
+  border-radius: 14px;
   font-size: 1rem;
-  box-shadow: 4px 4px 0 var(--text-dark, #1a2236);
+  font-family: inherit;
+  box-shadow: none;
   outline: none;
-  transition: border-color 0.15s;
+  transition: all 0.25s ease;
+  background: var(--mp-off-white);
+}
+
+.admin-gate-input:focus {
+  border-color: var(--mp-blue);
+  box-shadow: 0 0 0 4px rgba(28, 63, 186, 0.12);
+  background: #fff;
 }
 
 .admin-gate-input.error {
   border-color: #ef4444;
-  box-shadow: 4px 4px 0 #ef4444;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
 }
 
 .admin-gate-error {
@@ -66,26 +97,42 @@
 }
 
 .admin-gate-btn {
-  padding: 12px;
-  background: var(--primary-blue, #2563eb);
+  padding: 14px;
+  background: linear-gradient(135deg, var(--mp-blue) 0%, var(--mp-blue-light) 100%);
   color: #fff;
-  border: 3px solid var(--text-dark, #1a2236);
-  border-radius: 6px;
+  border: none;
+  border-radius: 14px;
   font-size: 1rem;
   font-weight: 700;
+  font-family: inherit;
   cursor: pointer;
-  box-shadow: 4px 4px 0 var(--text-dark, #1a2236);
-  transition: transform 0.1s, box-shadow 0.1s;
+  box-shadow: 0 6px 20px rgba(28, 63, 186, 0.35);
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-gate-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(213, 242, 150, 0.15) 100%);
+  opacity: 0;
+  transition: opacity 0.25s;
 }
 
 .admin-gate-btn:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0 var(--text-dark, #1a2236);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(28, 63, 186, 0.45);
+}
+
+.admin-gate-btn:hover::after {
+  opacity: 1;
 }
 
 .admin-gate-btn:active {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0 var(--text-dark, #1a2236);
+  transform: translateY(1px);
+  box-shadow: 0 3px 12px rgba(28, 63, 186, 0.3);
 }
 
 @keyframes admin-gate-shake {
@@ -100,19 +147,114 @@
   animation: admin-gate-shake 0.5s ease-in-out;
 }
 
+/* ── Logout Button (in admin header) ─────────────────────────────── */
 .admin-logout-btn {
-  background: transparent;
-  border: 2px solid var(--text-dark, #1a2236);
-  border-radius: 4px;
-  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 7px 16px;
   font-size: 0.8rem;
   cursor: pointer;
-  color: var(--text-dark, #1a2236);
+  color: rgba(255, 255, 255, 0.6);
   font-weight: 600;
-  transition: background 0.15s;
+  font-family: inherit;
+  transition: all 0.2s;
 }
 
 .admin-logout-btn:hover {
-  background: var(--text-dark, #1a2236);
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+
+/* ── Logout Confirmation Popover ─────────────────────────────────── */
+.logout-popover-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.logout-popover {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: 0;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(20, 36, 62, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  min-width: 220px;
+  text-align: center;
+  z-index: 200;
+  animation: popover-in 0.2s ease-out;
+}
+
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.logout-popover::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  right: 24px;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  transform: rotate(45deg);
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.logout-popover p {
+  margin: 0 0 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--mp-navy);
+}
+
+.logout-popover-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.logout-confirm-btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
   color: #fff;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.logout-confirm-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
+}
+
+.logout-cancel-btn {
+  padding: 8px 18px;
+  border: 1.5px solid var(--mp-gray-light);
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: #fff;
+  color: var(--mp-navy);
+}
+
+.logout-cancel-btn:hover {
+  background: var(--mp-off-white);
 }

@@ -13,6 +13,7 @@ export default function MonthlyAnalyticsSection({ monthKey, rows }) {
   const tableUsageData = buildTableUsageData(rows);
   const avgDuration = getAverageDurationMinutes(rows);
   const monthLabel = new Date(`${monthKey}-01`).toLocaleString("default", {
+    timeZone: "Asia/Tbilisi",
     month: "long",
     year: "numeric",
   });
