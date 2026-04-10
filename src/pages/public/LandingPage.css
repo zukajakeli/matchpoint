@@ -1,0 +1,431 @@
+/* ── Landing Page ────────────────────────────────────────────────────── */
+
+/* ── Hero ─────────────────────────────────────────────────────────── */
+.mp-hero {
+  background: var(--mp-navy, #14243e);
+  color: var(--mp-white, #fff);
+  padding: 80px 24px 100px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.mp-hero-content {
+  max-width: 720px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+.mp-hero-logo-wrapper {
+  margin-bottom: 24px;
+}
+
+.mp-hero-logo {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--mp-lime, #d5f296);
+  box-shadow: 0 0 40px rgba(213, 242, 150, 0.25);
+}
+
+.mp-hero-title {
+  font-size: 3.5rem;
+  font-weight: 900;
+  line-height: 1.1;
+  margin: 0 0 20px;
+  letter-spacing: -1px;
+}
+
+.mp-hero-subtitle {
+  font-size: 1.15rem;
+  opacity: 0.8;
+  margin: 0 0 36px;
+  line-height: 1.6;
+}
+
+.mp-hero-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.mp-hero-decoration {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.mp-hero-ball {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: var(--mp-blue, #1c3fba);
+  opacity: 0.15;
+  right: -80px;
+  top: -60px;
+}
+
+.mp-hero-ball-2 {
+  background: var(--mp-lime, #d5f296);
+  opacity: 0.1;
+  left: -100px;
+  bottom: -120px;
+  width: 400px;
+  height: 400px;
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────── */
+.mp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 32px;
+  border-radius: 10px;
+  font-family: var(--mp-font, "Poppins", sans-serif);
+  font-size: 1rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: all 0.2s ease;
+  letter-spacing: 0.3px;
+}
+
+.mp-btn-primary {
+  background: var(--mp-blue, #1c3fba);
+  color: var(--mp-white, #fff);
+  border-color: var(--mp-blue, #1c3fba);
+  box-shadow: 0 4px 16px rgba(28, 63, 186, 0.35);
+}
+
+.mp-btn-primary:hover {
+  background: var(--mp-blue-light, #2a52d4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(28, 63, 186, 0.45);
+}
+
+.mp-btn-outline {
+  background: transparent;
+  color: var(--mp-white, #fff);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.mp-btn-outline:hover {
+  border-color: var(--mp-lime, #d5f296);
+  color: var(--mp-lime, #d5f296);
+}
+
+.mp-btn-secondary {
+  background: var(--mp-navy, #14243e);
+  color: var(--mp-white, #fff);
+  border-color: var(--mp-navy, #14243e);
+}
+
+.mp-btn-secondary:hover {
+  background: var(--mp-blue, #1c3fba);
+  border-color: var(--mp-blue, #1c3fba);
+}
+
+.mp-btn-lime {
+  background: var(--mp-lime, #d5f296);
+  color: var(--mp-navy, #14243e);
+  border-color: var(--mp-lime, #d5f296);
+  font-weight: 800;
+}
+
+.mp-btn-lime:hover {
+  background: var(--mp-lime-dark, #b8d46e);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(213, 242, 150, 0.4);
+}
+
+/* ── Sections ─────────────────────────────────────────────────────── */
+.mp-section {
+  padding: 80px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.mp-section-alt {
+  background: var(--mp-off-white, #f4f5f7);
+  max-width: none;
+  text-align: center;
+}
+
+.mp-section-alt > * {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.mp-section-alt .mp-section-title {
+  width: 100%;
+  text-align: center;
+}
+
+.mp-section-title {
+  font-size: 2.2rem;
+  font-weight: 900;
+  text-align: center;
+  margin: 0 0 48px;
+  color: var(--mp-navy, #14243e);
+  letter-spacing: -0.5px;
+}
+
+.mp-section-cta {
+  text-align: center;
+  margin-top: 40px;
+}
+
+/* ── Products Grid ────────────────────────────────────────────────── */
+.mp-products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.mp-product-card {
+  background: var(--mp-white, #fff);
+  border-radius: 16px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  border: 2px solid #e5e7eb;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.mp-product-card:hover {
+  border-color: var(--mp-blue, #1c3fba);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(28, 63, 186, 0.12);
+}
+
+.mp-product-image {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--mp-off-white, #f4f5f7);
+}
+
+.mp-product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.mp-product-card:hover .mp-product-image img {
+  transform: scale(1.05);
+}
+
+.mp-product-info {
+  padding: 20px;
+}
+
+.mp-product-info h3 {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--mp-navy, #14243e);
+}
+
+.mp-product-subtitle {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--mp-gray, #6b7280);
+}
+
+/* ── Events Grid ──────────────────────────────────────────────────── */
+.mp-events-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  text-align: left;
+}
+
+.mp-event-card {
+  background: var(--mp-white, #fff);
+  border-radius: 16px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  border: 2px solid #e5e7eb;
+  transition: all 0.25s ease;
+}
+
+.mp-event-card:hover {
+  border-color: var(--mp-blue, #1c3fba);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(28, 63, 186, 0.12);
+}
+
+.mp-event-image {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--mp-navy, #14243e);
+}
+
+.mp-event-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mp-event-info {
+  padding: 20px;
+}
+
+.mp-event-date {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--mp-blue, #1c3fba);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mp-event-info h3 {
+  margin: 8px 0 6px;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.mp-event-fee {
+  display: inline-block;
+  padding: 4px 12px;
+  background: var(--mp-lime, #d5f296);
+  color: var(--mp-navy, #14243e);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+/* ── Blog Grid ────────────────────────────────────────────────────── */
+.mp-blog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.mp-blog-card {
+  background: var(--mp-white, #fff);
+  border-radius: 16px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  border: 2px solid #e5e7eb;
+  transition: all 0.25s ease;
+}
+
+.mp-blog-card:hover {
+  border-color: var(--mp-blue, #1c3fba);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(28, 63, 186, 0.12);
+}
+
+.mp-blog-image {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--mp-off-white, #f4f5f7);
+}
+
+.mp-blog-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mp-blog-info {
+  padding: 20px;
+}
+
+.mp-blog-info h3 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--mp-navy, #14243e);
+}
+
+.mp-blog-info p {
+  margin: 0 0 10px;
+  font-size: 0.88rem;
+  color: var(--mp-gray, #6b7280);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mp-blog-date {
+  font-size: 0.78rem;
+  color: var(--mp-gray, #6b7280);
+}
+
+/* ── CTA Banner ───────────────────────────────────────────────────── */
+.mp-cta-banner {
+  background: var(--mp-blue, #1c3fba);
+  color: var(--mp-white, #fff);
+  text-align: center;
+  padding: 80px 24px;
+}
+
+.mp-cta-banner h2 {
+  font-size: 2.4rem;
+  font-weight: 900;
+  margin: 0 0 12px;
+}
+
+.mp-cta-banner p {
+  font-size: 1.1rem;
+  opacity: 0.85;
+  margin: 0 0 32px;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .mp-hero {
+    padding: 48px 16px 64px;
+  }
+
+  .mp-hero-title {
+    font-size: 2.2rem;
+  }
+
+  .mp-hero-logo {
+    width: 90px;
+    height: 90px;
+  }
+
+  .mp-section {
+    padding: 48px 16px;
+  }
+
+  .mp-section-title {
+    font-size: 1.6rem;
+    margin-bottom: 32px;
+  }
+
+  .mp-products-grid,
+  .mp-events-grid,
+  .mp-blog-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mp-events-grid {
+    padding: 0;
+  }
+
+  .mp-cta-banner {
+    padding: 48px 16px;
+  }
+
+  .mp-cta-banner h2 {
+    font-size: 1.6rem;
+  }
+}

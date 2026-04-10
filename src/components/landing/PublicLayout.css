@@ -1,0 +1,185 @@
+/* ── MatchPoint Public Layout ─────────────────────────────────────────────
+   Brand colors:
+     Blue:   #1c3fba
+     White:  #ffffff
+     Navy:   #14243e
+     Lime:   #d5f296
+   Font: "Poppins" (primary), system fallbacks
+────────────────────────────────────────────────────────────────────────── */
+
+.mp-public-layout {
+  --mp-blue: #1c3fba;
+  --mp-blue-light: #2a52d4;
+  --mp-navy: #14243e;
+  --mp-lime: #d5f296;
+  --mp-lime-dark: #b8d46e;
+  --mp-white: #ffffff;
+  --mp-off-white: #f4f5f7;
+  --mp-gray: #6b7280;
+  --mp-font: "Poppins", "Inter", system-ui, -apple-system, sans-serif;
+
+  font-family: var(--mp-font);
+  color: var(--mp-navy);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--mp-white);
+}
+
+/* ── Header ──────────────────────────────────────────────────────────── */
+.mp-public-header {
+  background: var(--mp-navy);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(20, 36, 62, 0.15);
+}
+
+.mp-header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 68px;
+}
+
+.mp-header-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--mp-white);
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: 0.5px;
+}
+
+.mp-header-logo img {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.mp-header-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.mp-nav-link {
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.mp-nav-link:hover {
+  color: var(--mp-white);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.mp-nav-link.active {
+  color: var(--mp-navy);
+  background: var(--mp-lime);
+}
+
+/* ── Main ────────────────────────────────────────────────────────────── */
+.mp-public-main {
+  flex: 1;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+.mp-public-footer {
+  background: var(--mp-navy);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 48px 24px 24px;
+}
+
+.mp-footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.mp-footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: var(--mp-white);
+}
+
+.mp-footer-brand img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+.mp-footer-links {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.mp-footer-links a {
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.mp-footer-links a:hover {
+  color: var(--mp-lime);
+}
+
+.mp-footer-copy {
+  font-size: 0.8rem;
+  opacity: 0.5;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .mp-header-inner {
+    height: 60px;
+    padding: 0 16px;
+  }
+
+  .mp-header-nav {
+    gap: 2px;
+  }
+
+  .mp-nav-link {
+    font-size: 0.78rem;
+    padding: 6px 10px;
+  }
+
+  .mp-header-logo span {
+    display: none;
+  }
+
+  .mp-footer-links {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mp-header-nav {
+    gap: 0;
+  }
+
+  .mp-nav-link {
+    font-size: 0.72rem;
+    padding: 6px 8px;
+  }
+}

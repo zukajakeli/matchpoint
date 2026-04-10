@@ -1,19 +1,39 @@
 import React, { useState, useCallback } from "react";
 import "./AdminAuthGate.css";
 
-const STORAGE_KEY = "matchpoint_admin_auth";
-const CORRECT_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "";
+const SUPERADMIN_PASSWORD = import.meta.env.VITE_SUPERADMIN_PASSWORD || import.meta.env.VITE_ADMIN_PASSWORD || "";
+const STAFF_PASSWORD = import.meta.env.VITE_STAFF_PASSWORD || "";
 
-function isAuthenticated() {
+/**
+ * AdminAuthGate — role-aware password gate.
+ *
+ * Props:
+ *   role: "superadmin" | "staff"
+ *   children: React node
+ *
+ * /superadmin uses VITE_SUPERADMIN_PASSWORD (falls back to VITE_ADMIN_PASSWORD)
+ * /staff     uses VITE_STAFF_PASSWORD
+ */
+
+function storageKey(role) {
+  return `matchpoint_auth_${role}`;
+}
+
+function correctPassword(role) {
+  return role === "superadmin" ? SUPERADMIN_PASSWORD : STAFF_PASSWORD;
+}
+
+function isAuthenticated(role) {
   try {
-    return sessionStorage.getItem(STORAGE_KEY) === CORRECT_PASSWORD && CORRECT_PASSWORD !== "";
+    const pwd = correctPassword(role);
+    return sessionStorage.getItem(storageKey(role)) === pwd && pwd !== "";
   } catch {
     return false;
   }
 }
 
-export default function AdminAuthGate({ children }) {
-  const [authed, setAuthed] = useState(isAuthenticated);
+export default function AdminAuthGate({ role = "superadmin", children }) {
+  const [authed, setAuthed] = useState(() => isAuthenticated(role));
   const [input, setInput] = useState("");
   const [error, setError] = useState(false);
   const [shake, setShake] = useState(false);
@@ -21,8 +41,9 @@ export default function AdminAuthGate({ children }) {
   const handleSubmit = useCallback(
     (e) => {
       e.preventDefault();
-      if (input === CORRECT_PASSWORD && CORRECT_PASSWORD !== "") {
-        sessionStorage.setItem(STORAGE_KEY, input);
+      const pwd = correctPassword(role);
+      if (input === pwd && pwd !== "") {
+        sessionStorage.setItem(storageKey(role), input);
         setAuthed(true);
         setError(false);
       } else {
@@ -32,10 +53,15 @@ export default function AdminAuthGate({ children }) {
         setInput("");
       }
     },
-    [input]
+    [input, role]
   );
 
   if (authed) return children;
+
+  const title = role === "superadmin" ? "Superadmin Access" : "Staff Access";
+  const subtitle = role === "superadmin"
+    ? "Enter the superadmin password to continue."
+    : "Enter the staff password to continue.";
 
   return (
     <div className="admin-gate-overlay">
@@ -43,8 +69,8 @@ export default function AdminAuthGate({ children }) {
         <div className="admin-gate-logo">
           <img src="/matchpoint-logo.png" alt="MatchPoint" />
         </div>
-        <h2>Staff Access</h2>
-        <p>Enter the admin password to continue.</p>
+        <h2>{title}</h2>
+        <p>{subtitle}</p>
         <form onSubmit={handleSubmit} className="admin-gate-form">
           <input
             type="password"
@@ -67,10 +93,10 @@ export default function AdminAuthGate({ children }) {
   );
 }
 
-export function AdminLogoutButton() {
+export function AdminLogoutButton({ role = "superadmin" }) {
   const handleLogout = () => {
     try {
-      sessionStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(storageKey(role));
     } catch {
       // ignore
     }
@@ -78,7 +104,7 @@ export function AdminLogoutButton() {
   };
 
   return (
-    <button onClick={handleLogout} className="admin-logout-btn" title="Log out of admin">
+    <button onClick={handleLogout} className="admin-logout-btn" title="Log out">
       Log out
     </button>
   );

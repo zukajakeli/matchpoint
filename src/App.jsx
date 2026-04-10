@@ -9,10 +9,14 @@ import BookingsPage from "./pages/BookingsPage";
 import BookingPublicPage from "./pages/BookingPublicPage";
 import BookingSuccessPage from "./pages/BookingSuccessPage";
 import BookingCancelledPage from "./pages/BookingCancelledPage";
+import ProductsAdminPage from "./pages/ProductsAdminPage";
+import BlogAdminPage from "./pages/BlogAdminPage";
+import EventsAdminPage from "./pages/EventsAdminPage";
 import GlobalSoundButtons from "./components/GlobalSoundButtons";
 import HomeDashboard from "./components/HomeDashboard";
 import BookingNotifications from "./components/BookingNotifications";
 import AdminAuthGate, { AdminLogoutButton } from "./components/admin/AdminAuthGate";
+import { LanguageProvider } from "./i18n/LanguageContext";
 import useCart from "./hooks/useCart";
 import useTables from "./hooks/useTables";
 import useBookingNotifications from "./hooks/useBookingNotifications";
@@ -22,8 +26,20 @@ import "./App.css";
 import "./components/BookingNotifications.css";
 import { HOURLY_RATE, LOCAL_STORAGE_TABLES_KEY, LOCAL_STORAGE_HISTORY_KEY } from './config';
 
+// Public pages (lazy loaded)
+const LandingPage = React.lazy(() => import("./pages/public/LandingPage"));
+const ContactPage = React.lazy(() => import("./pages/public/ContactPage"));
+const ProductDetailPage = React.lazy(() => import("./pages/public/ProductDetailPage"));
+const BlogListPage = React.lazy(() => import("./pages/public/BlogListPage"));
+const BlogPostPage = React.lazy(() => import("./pages/public/BlogPostPage"));
+const EventsListPage = React.lazy(() => import("./pages/public/EventsListPage"));
+const EventDetailPage = React.lazy(() => import("./pages/public/EventDetailPage"));
+
 // ─── Staff portal (all internal pages, password-protected) ────────────────────
-function StaffPortal() {
+// role: "superadmin" | "staff" — staff has limited nav & routes
+function StaffPortal({ role = "superadmin" }) {
+  const isSuperadmin = role === "superadmin";
+  const basePath = isSuperadmin ? "/superadmin" : "/staff";
   const [_, setTick] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { notifications, dismissNotification } = useBookingNotifications();
@@ -111,26 +127,29 @@ function StaffPortal() {
   return (
     <div className="app">
       <header className="app-header">
-        <Link className="logo" to="/">
+        <Link className="logo" to={basePath}>
           <h1>
             <img src="/matchpoint-logo.png" alt="MatchPoint logo" className="header-logo-image" />
-            MatchPoint Table Manager
+            MatchPoint {isSuperadmin ? "Admin" : "Staff"}
           </h1>
         </Link>
         <div className="nav-container">
-          <Link className="nav-link" to="/admin/menu">Manage Bar</Link>
-          <Link className="nav-link nav-link-with-badge" to="/admin/bookings">
+          <Link className="nav-link" to={`${basePath}/menu`}>Manage Bar</Link>
+          <Link className="nav-link nav-link-with-badge" to={`${basePath}/bookings`}>
             Bookings
             {activeBookingsCount > 0 && (
               <span className="booking-count-badge">{activeBookingsCount}</span>
             )}
           </Link>
-          <Link className="nav-link" to="/admin/sales">Sale Settings</Link>
-          <Link className="nav-link home-link" to="/">Home</Link>
+          {isSuperadmin && <Link className="nav-link" to={`${basePath}/products`}>Products</Link>}
+          {isSuperadmin && <Link className="nav-link" to={`${basePath}/blog`}>Blog</Link>}
+          {isSuperadmin && <Link className="nav-link" to={`${basePath}/events`}>Events</Link>}
+          {isSuperadmin && <Link className="nav-link" to={`${basePath}/sales`}>Sales</Link>}
+          <Link className="nav-link home-link" to={basePath}>Home</Link>
           <button onClick={toggleSidebar} className="sidebar-toggle-btn">
             {isSidebarOpen ? "Close Bar" : "Open Bar"}
           </button>
-          <AdminLogoutButton />
+          <AdminLogoutButton role={role} />
         </div>
       </header>
 
@@ -139,7 +158,7 @@ function StaffPortal() {
         <GlobalSoundButtons />
         <Routes>
           <Route
-            path="/"
+            path={basePath}
             element={
               <HomeDashboard
                 tables={tables}
@@ -162,16 +181,19 @@ function StaffPortal() {
             }
           />
           <Route
-            path="/analytics"
+            path={`${basePath}/analytics`}
             element={
               <Suspense fallback={<div>Loading Analytics…</div>}>
                 <AnalyticsPage />
               </Suspense>
             }
           />
-          <Route path="/admin/sales" element={<SalesSettingsPage />} />
-          <Route path="/admin/menu" element={<MenuAdminPage />} />
-          <Route path="/admin/bookings" element={<BookingsPage />} />
+          <Route path={`${basePath}/menu`} element={<MenuAdminPage />} />
+          <Route path={`${basePath}/bookings`} element={<BookingsPage />} />
+          {isSuperadmin && <Route path={`${basePath}/sales`} element={<SalesSettingsPage />} />}
+          {isSuperadmin && <Route path={`${basePath}/products`} element={<ProductsAdminPage />} />}
+          {isSuperadmin && <Route path={`${basePath}/blog`} element={<BlogAdminPage />} />}
+          {isSuperadmin && <Route path={`${basePath}/events`} element={<EventsAdminPage />} />}
         </Routes>
       </main>
 
@@ -191,25 +213,60 @@ function StaffPortal() {
   );
 }
 
-// ─── Root router — splits public booking flow from staff portal ───────────────
+// ─── Root router — splits public pages from staff portal ───────────────
 function AppContent() {
   const location = useLocation();
-  const isPublicRoute = location.pathname.startsWith("/book");
 
-  if (isPublicRoute) {
+  // Superadmin routes — /superadmin/*
+  if (location.pathname.startsWith("/superadmin")) {
     return (
-      <Routes>
-        <Route path="/book" element={<BookingPublicPage />} />
-        <Route path="/book/success" element={<BookingSuccessPage />} />
-        <Route path="/book/cancelled" element={<BookingCancelledPage />} />
-      </Routes>
+      <AdminAuthGate role="superadmin">
+        <StaffPortal role="superadmin" />
+      </AdminAuthGate>
     );
   }
 
+  // Staff routes — /staff/*
+  if (location.pathname.startsWith("/staff")) {
+    return (
+      <AdminAuthGate role="staff">
+        <StaffPortal role="staff" />
+      </AdminAuthGate>
+    );
+  }
+
+  // Public routes (with i18n)
   return (
-    <AdminAuthGate>
-      <StaffPortal />
-    </AdminAuthGate>
+    <LanguageProvider>
+      <Suspense fallback={<div style={{ textAlign: "center", padding: "80px 24px", fontFamily: "Poppins, sans-serif" }}>Loading...</div>}>
+        <Routes>
+          {/* Landing */}
+          <Route path="/" element={<LandingPage />} />
+
+          {/* Booking */}
+          <Route path="/book" element={<BookingPublicPage />} />
+          <Route path="/book/success" element={<BookingSuccessPage />} />
+          <Route path="/book/cancelled" element={<BookingCancelledPage />} />
+
+          {/* Services/Products */}
+          <Route path="/services/:id" element={<ProductDetailPage />} />
+
+          {/* Blog */}
+          <Route path="/blog" element={<BlogListPage />} />
+          <Route path="/blog/:slug" element={<BlogPostPage />} />
+
+          {/* Events */}
+          <Route path="/events" element={<EventsListPage />} />
+          <Route path="/events/:id" element={<EventDetailPage />} />
+
+          {/* Contact */}
+          <Route path="/contact" element={<ContactPage />} />
+
+          {/* Fallback */}
+          <Route path="*" element={<LandingPage />} />
+        </Routes>
+      </Suspense>
+    </LanguageProvider>
   );
 }
 

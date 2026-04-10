@@ -227,7 +227,11 @@ describe("Input validation (mirrors Edge Function rules)", () => {
     customerPhone: "+995555123456",
     tablesCount: 1,
     hoursCount: 1,
-    bookingAt: new Date(Date.now() + 2 * 3600 * 1000).toISOString(), // 2h ahead
+    bookingAt: (() => {
+      const d = new Date(Date.now() + 2 * 3600 * 1000);
+      d.setMinutes(0, 0, 0); // snap to quarter-hour (:00)
+      return d.toISOString();
+    })(),
   };
 
   it("passes for valid input", () => {

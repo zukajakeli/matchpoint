@@ -1,0 +1,233 @@
+.mp-event-detail-page {
+  min-height: 60vh;
+}
+
+.mp-event-detail-loading,
+.mp-event-detail-empty {
+  text-align: center;
+  padding: 80px 24px;
+}
+
+.mp-event-detail-cover {
+  max-height: 360px;
+  overflow: hidden;
+  background: var(--mp-navy, #14243e);
+}
+
+.mp-event-detail-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mp-event-detail-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 40px;
+  align-items: start;
+}
+
+.mp-event-detail-back {
+  display: inline-block;
+  margin-bottom: 16px;
+  font-size: 0.88rem;
+  color: var(--mp-blue, #1c3fba);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.mp-event-detail-main h1 {
+  font-size: 2rem;
+  font-weight: 900;
+  margin: 0 0 16px;
+  color: var(--mp-navy, #14243e);
+}
+
+.mp-event-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.mp-event-detail-date-tag {
+  display: inline-block;
+  padding: 6px 14px;
+  background: var(--mp-navy, #14243e);
+  color: var(--mp-white, #fff);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.mp-event-detail-fee {
+  display: inline-block;
+  padding: 6px 14px;
+  background: var(--mp-lime, #d5f296);
+  color: var(--mp-navy, #14243e);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.mp-event-detail-spots {
+  display: inline-block;
+  padding: 6px 14px;
+  background: #e0e7ff;
+  color: var(--mp-blue, #1c3fba);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.mp-event-detail-desc {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #374151;
+}
+
+.mp-event-detail-desc p {
+  margin: 0 0 16px;
+  white-space: pre-wrap;
+}
+
+/* Registration Card */
+.mp-event-detail-reg-card {
+  background: var(--mp-white, #fff);
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 28px 24px;
+  position: sticky;
+  top: 84px;
+}
+
+.mp-event-detail-reg-card h3 {
+  margin: 0 0 20px;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--mp-navy, #14243e);
+}
+
+.mp-event-field {
+  margin-bottom: 16px;
+}
+
+.mp-event-field label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--mp-navy, #14243e);
+}
+
+.mp-event-field input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.mp-event-field input:focus {
+  border-color: var(--mp-blue, #1c3fba);
+}
+
+.mp-event-payment-options {
+  display: flex;
+  gap: 8px;
+}
+
+.mp-event-pay-btn {
+  flex: 1;
+  padding: 10px 12px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  background: var(--mp-white, #fff);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.mp-event-pay-btn.selected {
+  border-color: var(--mp-blue, #1c3fba);
+  background: #e0e7ff;
+  color: var(--mp-blue, #1c3fba);
+}
+
+.mp-event-error {
+  margin: 0 0 12px;
+  font-size: 0.88rem;
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.mp-event-submit {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.mp-event-detail-success-box {
+  background: #dcfce7;
+  border: 2px solid #86efac;
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+}
+
+.mp-event-detail-success-box h3 {
+  margin: 0 0 8px;
+  color: #166534;
+  font-size: 1.1rem;
+}
+
+.mp-event-detail-success-box p {
+  margin: 0;
+  color: #166534;
+  font-size: 0.9rem;
+}
+
+.mp-event-detail-error-box {
+  background: #fee2e2;
+  border: 2px solid #fca5a5;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.mp-event-detail-error-box p {
+  margin: 0;
+  color: #991b1b;
+  font-size: 0.9rem;
+}
+
+.mp-event-detail-closed {
+  background: var(--mp-off-white, #f4f5f7);
+  border: 2px solid #d1d5db;
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  color: var(--mp-gray, #6b7280);
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .mp-event-detail-content {
+    grid-template-columns: 1fr;
+    padding: 24px 16px 48px;
+    gap: 24px;
+  }
+
+  .mp-event-detail-reg-card {
+    position: static;
+  }
+}

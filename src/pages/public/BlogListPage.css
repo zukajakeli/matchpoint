@@ -1,0 +1,118 @@
+.mp-blog-list-hero {
+  background: var(--mp-navy, #14243e);
+  color: var(--mp-white, #fff);
+  text-align: center;
+  padding: 64px 24px 48px;
+}
+
+.mp-blog-list-hero h1 {
+  font-size: 2.5rem;
+  font-weight: 900;
+  margin: 0 0 12px;
+}
+
+.mp-blog-list-hero p {
+  font-size: 1.1rem;
+  opacity: 0.8;
+  margin: 0;
+}
+
+.mp-blog-list-content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+
+.mp-blog-list-loading,
+.mp-blog-list-empty {
+  text-align: center;
+  font-size: 1rem;
+  color: var(--mp-gray, #6b7280);
+  padding: 40px 0;
+}
+
+.mp-blog-list-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.mp-blog-list-card {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+  background: var(--mp-white, #fff);
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.25s ease;
+}
+
+.mp-blog-list-card:hover {
+  border-color: var(--mp-blue, #1c3fba);
+  box-shadow: 0 8px 24px rgba(28, 63, 186, 0.1);
+}
+
+.mp-blog-list-card-image {
+  overflow: hidden;
+  background: var(--mp-off-white, #f4f5f7);
+}
+
+.mp-blog-list-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  min-height: 200px;
+}
+
+.mp-blog-list-card-info {
+  padding: 24px 24px 24px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.mp-blog-list-card-info h2 {
+  margin: 0 0 10px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--mp-navy, #14243e);
+}
+
+.mp-blog-list-card-info p {
+  margin: 0 0 14px;
+  font-size: 0.9rem;
+  color: var(--mp-gray, #6b7280);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mp-blog-list-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 0.8rem;
+  color: var(--mp-gray, #6b7280);
+}
+
+@media (max-width: 768px) {
+  .mp-blog-list-card {
+    grid-template-columns: 1fr;
+  }
+
+  .mp-blog-list-card-image {
+    max-height: 200px;
+  }
+
+  .mp-blog-list-card-info {
+    padding: 20px;
+  }
+
+  .mp-blog-list-content {
+    padding: 32px 16px 48px;
+  }
+}
