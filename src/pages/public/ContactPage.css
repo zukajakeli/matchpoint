@@ -1,0 +1,107 @@
+.mp-contact-page {
+  min-height: 60vh;
+}
+
+.mp-contact-hero {
+  background: var(--mp-navy, #14243e);
+  color: var(--mp-white, #fff);
+  text-align: center;
+  padding: 64px 24px 48px;
+}
+
+.mp-contact-hero h1 {
+  font-size: 2.5rem;
+  font-weight: 900;
+  margin: 0 0 12px;
+}
+
+.mp-contact-hero p {
+  font-size: 1.1rem;
+  opacity: 0.8;
+  margin: 0;
+}
+
+.mp-contact-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 64px 24px;
+}
+
+.mp-contact-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+.mp-contact-card {
+  background: var(--mp-white, #fff);
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 28px 24px;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.mp-contact-card:hover {
+  border-color: var(--mp-blue, #1c3fba);
+}
+
+.mp-contact-icon {
+  font-size: 2rem;
+  margin-bottom: 12px;
+}
+
+.mp-contact-card h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--mp-navy, #14243e);
+}
+
+.mp-contact-card p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--mp-gray, #6b7280);
+  line-height: 1.5;
+}
+
+.mp-contact-card a {
+  color: var(--mp-blue, #1c3fba);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.mp-contact-card a:hover {
+  text-decoration: underline;
+}
+
+.mp-contact-map {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px solid #e5e7eb;
+}
+
+@media (max-width: 768px) {
+  .mp-contact-hero {
+    padding: 40px 16px 32px;
+  }
+
+  .mp-contact-hero h1 {
+    font-size: 1.8rem;
+  }
+
+  .mp-contact-content {
+    padding: 32px 16px;
+  }
+
+  .mp-contact-info {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .mp-contact-info {
+    grid-template-columns: 1fr;
+  }
+}

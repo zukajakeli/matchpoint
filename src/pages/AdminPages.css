@@ -1,0 +1,288 @@
+/* ── Shared Admin Page Styles ─────────────────────────────────────── */
+
+.admin-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px 0;
+}
+
+.admin-page h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0 0 24px;
+  color: #14243e;
+}
+
+/* Form */
+.admin-form {
+  background: #fff;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.admin-form h3 {
+  margin: 0 0 20px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #14243e;
+}
+
+.admin-field {
+  margin-bottom: 16px;
+}
+
+.admin-field label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #374151;
+}
+
+.admin-field input[type="text"],
+.admin-field input[type="email"],
+.admin-field input[type="tel"],
+.admin-field input[type="url"],
+.admin-field input[type="number"],
+.admin-field input[type="datetime-local"],
+.admin-field select,
+.admin-field textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+.admin-field input:focus,
+.admin-field textarea:focus,
+.admin-field select:focus {
+  border-color: #1c3fba;
+}
+
+.admin-field textarea {
+  resize: vertical;
+}
+
+.admin-field-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-field-row label {
+  margin-bottom: 0;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-field-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.admin-image-preview {
+  display: block;
+  margin-top: 8px;
+  max-width: 200px;
+  max-height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* Buttons */
+.admin-btn {
+  padding: 10px 20px;
+  border: 2px solid #14243e;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.admin-btn-primary {
+  background: #1c3fba;
+  color: #fff;
+  border-color: #1c3fba;
+}
+
+.admin-btn-primary:hover {
+  background: #1534a0;
+}
+
+.admin-btn-secondary {
+  background: #f4f5f7;
+  color: #14243e;
+  border-color: #d1d5db;
+}
+
+.admin-btn-secondary:hover {
+  background: #e5e7eb;
+}
+
+.admin-btn-sm {
+  padding: 5px 12px;
+  font-size: 0.78rem;
+  border-width: 1px;
+  margin-right: 4px;
+  background: #f4f5f7;
+  color: #14243e;
+  border-color: #d1d5db;
+}
+
+.admin-btn-sm:hover {
+  background: #e5e7eb;
+}
+
+.admin-btn-danger {
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+
+.admin-btn-danger:hover {
+  background: #fee2e2;
+}
+
+/* Table */
+.admin-list h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 16px;
+  color: #14243e;
+}
+
+.admin-empty {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.admin-table-wrapper {
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6b7280;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.admin-table td {
+  padding: 12px;
+  font-size: 0.88rem;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: middle;
+}
+
+.admin-table td strong {
+  color: #14243e;
+}
+
+.admin-table td small {
+  color: #6b7280;
+}
+
+.admin-table td code {
+  font-size: 0.78rem;
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.admin-thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+/* Status badges */
+.admin-status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.2s;
+}
+
+.admin-status-badge:hover {
+  opacity: 0.8;
+}
+
+.admin-status-badge.active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.admin-status-badge.inactive {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.admin-status-badge.warning {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+/* Quill editor overrides */
+.ql-editor {
+  min-height: 250px !important;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.ql-toolbar {
+  border-radius: 8px 8px 0 0 !important;
+  border-color: #d1d5db !important;
+}
+
+.ql-container {
+  border-radius: 0 0 8px 8px !important;
+  border-color: #d1d5db !important;
+}
+
+@media (max-width: 768px) {
+  .admin-field-row-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-table {
+    font-size: 0.82rem;
+  }
+
+  .admin-table th,
+  .admin-table td {
+    padding: 8px;
+  }
+}

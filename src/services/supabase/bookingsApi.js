@@ -16,18 +16,20 @@ function normalizeBooking(row) {
   };
 }
 
+const BOOKINGS_SELECT =
+  "id, customer_name, customer_email, customer_phone, tables_count, hours_count, booking_at, is_done, done_at, created_at, game_type, booking_source, payment_status, flitt_order_id, flitt_payment_id, amount_charged, masked_card";
+
 export async function fetchBookings() {
   assertSupabase();
-  const baseQuery = supabase
+  const { data, error } = await supabase
     .from("bookings")
-    .select("id, customer_name, tables_count, hours_count, booking_at, is_done, done_at, created_at")
+    .select(BOOKINGS_SELECT)
+    .or("is_done.is.false,is_done.is.null")
     .order("created_at", { ascending: false });
 
-  // Main path: active bookings where done is false (or null for older rows)
-  const { data, error } = await baseQuery.or("is_done.is.false,is_done.is.null");
   if (!error) return (data || []).map(normalizeBooking);
 
-  // Fallback for legacy schema/data edge cases
+  // Fallback for legacy schema
   const fallback = await supabase
     .from("bookings")
     .select("id, customer_name, tables_count, hours_count, created_at")
@@ -35,6 +37,19 @@ export async function fetchBookings() {
 
   if (fallback.error) throw fallback.error;
   return (fallback.data || []).map(normalizeBooking);
+}
+
+export async function fetchUpcomingPaidBookings() {
+  if (!isSupabaseConfigured || !supabase) return [];
+  const now = new Date().toISOString();
+  const { data } = await supabase
+    .from("bookings")
+    .select(BOOKINGS_SELECT)
+    .eq("payment_status", "paid")
+    .eq("is_done", false)
+    .gte("booking_at", now)
+    .order("booking_at", { ascending: true });
+  return (data || []).map(normalizeBooking);
 }
 
 export async function createBooking({ customerName, tablesCount, hoursCount, bookingAt }) {
@@ -48,23 +63,25 @@ export async function createBooking({ customerName, tablesCount, hoursCount, boo
     tables_count: Number(tablesCount),
     hours_count: Number.isFinite(normalizedHours) && normalizedHours > 0 ? normalizedHours : null,
     booking_at: bookingAt || null,
+    booking_source: "staff",
+    payment_status: "none",
   };
 
-  const primary = await supabase
+  const { data, error } = await supabase
     .from("bookings")
     .insert(payload)
-    .select("id, customer_name, tables_count, hours_count, booking_at, is_done, done_at, created_at")
+    .select(BOOKINGS_SELECT)
     .single();
 
-  if (!primary.error) {
+  if (!error) {
     emitBookingsChanged();
-    return normalizeBooking(primary.data);
+    return normalizeBooking(data);
   }
 
-  // Fallback for old schema without is_done/done_at
+  // Fallback for old schema
   const fallback = await supabase
     .from("bookings")
-    .insert(payload)
+    .insert({ customer_name: customerName, tables_count: Number(tablesCount), hours_count: normalizedHours, booking_at: bookingAt || null })
     .select("id, customer_name, tables_count, hours_count, created_at")
     .single();
 

@@ -4,6 +4,7 @@ import TableCard from "./TableCard";
 import Sidebar from "./Sidebar";
 import SessionHistory from "./SessionHistory";
 import CocktailRecipes from "./CocktailRecipes";
+import useUpcomingBookings from "../hooks/useUpcomingBookings";
 
 export default function HomeDashboard({
   tables,
@@ -23,6 +24,8 @@ export default function HomeDashboard({
   toggleSidebar,
   sessionHistory,
 }) {
+  const upcomingBookings = useUpcomingBookings();
+
   return (
     <>
       <div className="tables-grid">
@@ -35,6 +38,7 @@ export default function HomeDashboard({
             onPayAndClear={handlePayAndClear}
             handleToggleAvailability={handleToggleAvailability}
             onTransferTimer={handleTransferTimer}
+            upcomingBookings={upcomingBookings}
           />
         ))}
       </div>

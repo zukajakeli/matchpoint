@@ -1,0 +1,118 @@
+.admin-gate-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--primary-dark, #1a2236);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.admin-gate-card {
+  background: var(--neutral-white, #fff);
+  border: 3px solid var(--text-dark, #1a2236);
+  border-radius: 12px;
+  box-shadow: 10px 10px 0 var(--text-dark, #1a2236);
+  padding: 40px 36px 32px;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+}
+
+.admin-gate-logo img {
+  height: 48px;
+  margin-bottom: 12px;
+  object-fit: contain;
+}
+
+.admin-gate-card h2 {
+  margin: 0 0 6px;
+  font-size: 1.5rem;
+  color: var(--text-dark, #1a2236);
+}
+
+.admin-gate-card p {
+  margin: 0 0 20px;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.admin-gate-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-gate-input {
+  padding: 12px 14px;
+  border: 3px solid var(--text-dark, #1a2236);
+  border-radius: 6px;
+  font-size: 1rem;
+  box-shadow: 4px 4px 0 var(--text-dark, #1a2236);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.admin-gate-input.error {
+  border-color: #ef4444;
+  box-shadow: 4px 4px 0 #ef4444;
+}
+
+.admin-gate-error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.admin-gate-btn {
+  padding: 12px;
+  background: var(--primary-blue, #2563eb);
+  color: #fff;
+  border: 3px solid var(--text-dark, #1a2236);
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--text-dark, #1a2236);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.admin-gate-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--text-dark, #1a2236);
+}
+
+.admin-gate-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--text-dark, #1a2236);
+}
+
+@keyframes admin-gate-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+
+.admin-gate-shake {
+  animation: admin-gate-shake 0.5s ease-in-out;
+}
+
+.admin-logout-btn {
+  background: transparent;
+  border: 2px solid var(--text-dark, #1a2236);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: var(--text-dark, #1a2236);
+  font-weight: 600;
+  transition: background 0.15s;
+}
+
+.admin-logout-btn:hover {
+  background: var(--text-dark, #1a2236);
+  color: #fff;
+}

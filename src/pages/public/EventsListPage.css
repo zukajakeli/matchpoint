@@ -1,0 +1,146 @@
+.mp-events-list-hero {
+  background: var(--mp-navy, #14243e);
+  color: var(--mp-white, #fff);
+  text-align: center;
+  padding: 64px 24px 48px;
+}
+
+.mp-events-list-hero h1 {
+  font-size: 2.5rem;
+  font-weight: 900;
+  margin: 0 0 12px;
+}
+
+.mp-events-list-hero p {
+  font-size: 1.1rem;
+  opacity: 0.8;
+  margin: 0;
+}
+
+.mp-events-list-content {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+
+.mp-events-list-loading,
+.mp-events-list-empty {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--mp-gray, #6b7280);
+}
+
+.mp-events-list-subtitle {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0 0 24px;
+  color: var(--mp-navy, #14243e);
+}
+
+.mp-events-past {
+  margin-top: 48px;
+  opacity: 0.6;
+}
+
+.mp-events-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.mp-events-list-grid-past {
+  opacity: 0.7;
+}
+
+.mp-events-list-card {
+  background: var(--mp-white, #fff);
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.25s ease;
+}
+
+.mp-events-list-card:hover {
+  border-color: var(--mp-blue, #1c3fba);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(28, 63, 186, 0.12);
+}
+
+.mp-events-list-card.past:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.mp-events-list-card-image {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--mp-navy, #14243e);
+}
+
+.mp-events-list-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mp-events-list-card-info {
+  padding: 20px;
+}
+
+.mp-events-list-date {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--mp-blue, #1c3fba);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.mp-events-list-card-info h3 {
+  margin: 8px 0 8px;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.mp-events-list-card-info p {
+  margin: 0 0 12px;
+  font-size: 0.88rem;
+  color: var(--mp-gray, #6b7280);
+  line-height: 1.5;
+}
+
+.mp-events-list-card-footer {
+  display: flex;
+  gap: 12px;
+}
+
+.mp-events-list-fee {
+  display: inline-block;
+  padding: 4px 12px;
+  background: var(--mp-lime, #d5f296);
+  color: var(--mp-navy, #14243e);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.mp-events-list-slots {
+  display: inline-block;
+  padding: 4px 12px;
+  background: #e0e7ff;
+  color: var(--mp-blue, #1c3fba);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .mp-events-list-content {
+    padding: 32px 16px 48px;
+  }
+
+  .mp-events-list-grid {
+    grid-template-columns: 1fr;
+  }
+}

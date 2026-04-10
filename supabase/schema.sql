@@ -223,3 +223,87 @@ alter table public.bookings
 add constraint bookings_hours_count_check
 check (hours_count is null or hours_count > 0);
 
+-- ============================================================
+-- Online Booking + Payment additions
+-- ============================================================
+
+alter table public.bookings add column if not exists customer_email text;
+alter table public.bookings add column if not exists customer_phone text;
+alter table public.bookings add column if not exists game_type text default 'pingpong';
+-- 'staff' = created by staff in admin, 'online' = customer self-service
+alter table public.bookings add column if not exists booking_source text default 'staff';
+-- 'none' = staff entry, 'pending' = awaiting Flitt payment,
+-- 'paid' = confirmed, 'failed' = declined/expired
+alter table public.bookings add column if not exists payment_status text default 'none';
+alter table public.bookings add column if not exists flitt_order_id text;
+alter table public.bookings add column if not exists flitt_payment_id text;
+alter table public.bookings add column if not exists amount_charged numeric(10,2);
+alter table public.bookings add column if not exists masked_card text;
+
+-- Unique constraint on flitt_order_id (skip if already exists)
+do $$
+begin
+  alter table public.bookings add constraint bookings_flitt_order_id_unique unique (flitt_order_id);
+exception
+  when duplicate_table then null;
+  when duplicate_object then null;
+end
+$$;
+
+-- Atomic availability-check + insert to prevent double-booking race conditions.
+-- Uses FOR UPDATE row lock so two concurrent transactions cannot both see
+-- the same available slot and both succeed.
+create or replace function public.create_online_booking(
+  p_customer_name    text,
+  p_customer_email   text,
+  p_customer_phone   text,
+  p_tables_count     integer,
+  p_hours_count      numeric,
+  p_booking_at       timestamptz,
+  p_game_type        text,
+  p_flitt_order_id   text,
+  p_amount_charged   numeric
+) returns uuid
+language plpgsql
+as $$
+declare
+  v_booked integer;
+  v_id     uuid;
+  v_end    timestamptz;
+begin
+  v_end := p_booking_at + (p_hours_count * interval '1 hour');
+
+  -- Lock conflicting rows; counts how many tables are already reserved
+  select coalesce(sum(tables_count), 0) into v_booked
+  from public.bookings
+  where is_done = false
+    and (
+      payment_status = 'paid'
+      or (payment_status = 'pending' and created_at > now() - interval '20 minutes')
+    )
+    and booking_at < v_end
+    and (booking_at + (hours_count * interval '1 hour')) > p_booking_at
+  for update;
+
+  if (v_booked + p_tables_count) > 12 then
+    raise exception 'SLOT_UNAVAILABLE: % tables already booked in this window', v_booked;
+  end if;
+
+  insert into public.bookings (
+    customer_name, customer_email, customer_phone,
+    tables_count, hours_count, booking_at, game_type,
+    flitt_order_id, payment_status, booking_source, amount_charged
+  ) values (
+    p_customer_name, p_customer_email, p_customer_phone,
+    p_tables_count, p_hours_count, p_booking_at, p_game_type,
+    p_flitt_order_id, 'pending', 'online', p_amount_charged
+  )
+  returning id into v_id;
+
+  return v_id;
+end;
+$$;
+
+grant execute on function public.create_online_booking(text, text, text, integer, numeric, timestamptz, text, text, numeric)
+  to anon, authenticated;
+

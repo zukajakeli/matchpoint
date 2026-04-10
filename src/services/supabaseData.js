@@ -22,5 +22,6 @@ export {
   fetchActiveBookingsCount,
   subscribeToBookingsChanges,
   subscribeToBookingInserts,
+  fetchUpcomingPaidBookings,
 } from "./supabase/bookingsApi";
 
