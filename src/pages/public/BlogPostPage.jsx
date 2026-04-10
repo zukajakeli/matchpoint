@@ -52,7 +52,7 @@ export default function BlogPostPage() {
 
   return (
     <PublicLayout>
-      <div className="mp-blog-post-page">
+      <div className="mp-blog-post-page mp-grain">
         {post.cover_image && (
           <div className="mp-blog-post-cover">
             <img src={post.cover_image} alt={post.title} />

@@ -28,7 +28,7 @@ export default function BlogListPage() {
   return (
     <PublicLayout>
       <div className="mp-blog-list-page">
-        <section className="mp-blog-list-hero">
+        <section className="mp-blog-list-hero mp-dots-white mp-grain">
           <h1>{t("blog_title")}</h1>
           <p>{t("blog_subtitle")}</p>
         </section>

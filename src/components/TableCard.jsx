@@ -7,38 +7,12 @@ import { HOURLY_RATE, LOCAL_STORAGE_SALES_SETTINGS_KEY } from "../config";
 import { getTableCardViewModel, loadSalesSettings } from "../utils/tableCardView";
 import TableCardUnavailable from "./table-card/TableCardUnavailable";
 
-const GAME_TYPE_MAP = {
-  pingpong: "pingpong",
-  foosball: "foosball",
-  airhockey: "airhockey",
-  playstation: "playstation",
-};
-
-// Returns the soonest upcoming paid booking for this card's game type within 1.5 hours.
-function getSoonestBooking(upcomingBookings, gameType) {
-  if (!upcomingBookings || upcomingBookings.length === 0) return null;
-  const cutoff = Date.now() + 1.5 * 60 * 60 * 1000;
-  const matches = upcomingBookings.filter((b) => {
-    if (!b.booking_at) return false;
-    const t = new Date(b.booking_at).getTime();
-    if (t > cutoff) return false;
-    // If game_type is specified on the booking, it must match this card
-    if (b.game_type && GAME_TYPE_MAP[b.game_type] && b.game_type !== gameType) return false;
-    return true;
-  });
-  if (matches.length === 0) return null;
-  // Return the earliest one
-  return matches.reduce((a, b) =>
-    new Date(a.booking_at) <= new Date(b.booking_at) ? a : b
-  );
-}
-
 function formatShortTime(isoString) {
   if (!isoString) return "";
   return new Date(isoString).toLocaleTimeString("en-GB", { timeZone: "Asia/Tbilisi", hour: "2-digit", minute: "2-digit" });
 }
 
-const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggleAvailability, onTransferTimer, upcomingBookings }) => {
+const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggleAvailability, onTransferTimer, assignedBooking }) => {
   const {
     name,
     isAvailable,
@@ -57,8 +31,6 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
     canPayAndClear,
     isCountdownEnded,
   } = getTableCardViewModel(table, HOURLY_RATE, sales);
-
-  const soonestBooking = getSoonestBooking(upcomingBookings, gameType);
 
   if (!isAvailable) {
     return (
@@ -104,9 +76,9 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
       onDrop={handleDrop}
       title="Drag to another table to transfer the timer"
     >
-      {soonestBooking && (
+      {assignedBooking && (
         <div className="table-booking-warning">
-          Booked {formatShortTime(soonestBooking.booking_at)} · {soonestBooking.tables_count} table{soonestBooking.tables_count > 1 ? "s" : ""}
+          Booked {formatShortTime(assignedBooking.booking_at)} · {assignedBooking.customer_name}
         </div>
       )}
       <div style={{ position: "absolute", top: 10, right: 10 }}>

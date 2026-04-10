@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 const GAME_LABELS = {
   pingpong: "Ping-Pong",
@@ -34,6 +34,21 @@ function formatDateTime(iso) {
 }
 
 export default function BookingList({ bookings, isLoading, onMarkDone, onDelete, activeFilter }) {
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const popoverRef = useRef(null);
+
+  // Close popover on outside click
+  useEffect(() => {
+    if (!confirmDeleteId) return;
+    const handler = (e) => {
+      if (popoverRef.current && !popoverRef.current.contains(e.target)) {
+        setConfirmDeleteId(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [confirmDeleteId]);
+
   const filtered = bookings.filter((b) => {
     if (activeFilter === "all") return true;
     if (activeFilter === "online_paid") return b.booking_source === "online" && b.payment_status === "paid";
@@ -91,13 +106,39 @@ export default function BookingList({ bookings, isLoading, onMarkDone, onDelete,
             >
               Done
             </button>
-            <button
-              type="button"
-              className="admin-btn admin-btn-danger booking-action-btn"
-              onClick={() => onDelete(booking.id)}
-            >
-              Delete
-            </button>
+            <div className="delete-popover-wrapper" ref={confirmDeleteId === booking.id ? popoverRef : undefined}>
+              <button
+                type="button"
+                className="admin-btn admin-btn-danger booking-action-btn"
+                onClick={() => setConfirmDeleteId(booking.id)}
+              >
+                Delete
+              </button>
+              {confirmDeleteId === booking.id && (
+                <div className="delete-confirm-popover">
+                  <p className="delete-confirm-text">Delete this booking?</p>
+                  <div className="delete-confirm-actions">
+                    <button
+                      type="button"
+                      className="delete-confirm-yes"
+                      onClick={() => {
+                        onDelete(booking.id);
+                        setConfirmDeleteId(null);
+                      }}
+                    >
+                      Yes, delete
+                    </button>
+                    <button
+                      type="button"
+                      className="delete-confirm-no"
+                      onClick={() => setConfirmDeleteId(null)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       ))}

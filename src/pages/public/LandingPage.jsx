@@ -34,7 +34,7 @@ export default function LandingPage() {
   return (
     <PublicLayout>
       {/* Hero Banner */}
-      <section className="mp-hero">
+      <section className="mp-hero mp-dots-white mp-grain-strong">
         <div className="mp-hero-content">
           <div className="mp-hero-logo-wrapper">
             <img src="/matchpoint-logo.png" alt={VENUE_NAME} className="mp-hero-logo" />
@@ -80,7 +80,7 @@ export default function LandingPage() {
 
       {/* Upcoming Events */}
       {events.length > 0 && (
-        <section className="mp-section mp-section-alt" id="events">
+        <section className="mp-section mp-section-alt mp-dots-blue" id="events">
           <h2 className="mp-section-title">{t("section_events")}</h2>
           <div className="mp-events-grid">
             {events.map((ev) => (
@@ -108,7 +108,7 @@ export default function LandingPage() {
 
       {/* Blog Preview */}
       {blogPosts.length > 0 && (
-        <section className="mp-section" id="blog">
+        <section className="mp-section mp-dots mp-grain" id="blog">
           <h2 className="mp-section-title">{t("section_blog")}</h2>
           <div className="mp-blog-grid">
             {blogPosts.map((post) => (
@@ -135,7 +135,7 @@ export default function LandingPage() {
       )}
 
       {/* CTA Banner */}
-      <section className="mp-cta-banner">
+      <section className="mp-cta-banner mp-dots-white mp-grain">
         <h2>{t("cta_title")}</h2>
         <p>{t("cta_subtitle")}</p>
         <Link to="/book" className="mp-btn mp-btn-lime">{t("cta_book")}</Link>

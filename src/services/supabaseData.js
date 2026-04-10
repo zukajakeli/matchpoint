@@ -16,6 +16,7 @@ export {
 } from "./supabase/liveTimersApi";
 export {
   fetchBookings,
+  fetchDoneBookings,
   createBooking,
   markBookingAsDone,
   deleteBooking,

@@ -11,12 +11,12 @@ export default function ContactPage() {
   return (
     <PublicLayout>
       <div className="mp-contact-page">
-        <section className="mp-contact-hero">
+        <section className="mp-contact-hero mp-dots-white mp-grain">
           <h1>{t("contact_title")}</h1>
           <p>{t("contact_subtitle")}</p>
         </section>
 
-        <section className="mp-contact-content">
+        <section className="mp-contact-content mp-dots">
           <div className="mp-contact-info">
             <div className="mp-contact-card">
               <div className="mp-contact-icon">&#128205;</div>

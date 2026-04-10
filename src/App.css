@@ -30,7 +30,7 @@
   --table-ready-border: #ff6b6b;
   --table-ready-text: #cf4040;
 
-  --font-family: "Poppins", sans-serif;
+  --font-family: "Loos Extended", "DM Sans", system-ui, -apple-system, sans-serif;
 }
 
 body {

@@ -21,6 +21,8 @@ import useCart from "./hooks/useCart";
 import useTables from "./hooks/useTables";
 import useBookingNotifications from "./hooks/useBookingNotifications";
 import useActiveBookingsCount from "./hooks/useActiveBookingsCount";
+import useUpcomingBookings from "./hooks/useUpcomingBookings";
+import { markBookingAsDone } from "./services/supabaseData";
 import { playTableEndSound } from "./utils/utils";
 import "./App.css";
 import "./components/BookingNotifications.css";
@@ -44,6 +46,7 @@ function StaffPortal({ role = "superadmin" }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { notifications, dismissNotification } = useBookingNotifications();
   const activeBookingsCount = useActiveBookingsCount();
+  const upcomingBookings = useUpcomingBookings();
   const { cart, addToCart, incrementQuantity, decrementQuantity, removeItem, calculateTotal, handleSubmit } = useCart();
   const {
     tables,
@@ -124,6 +127,16 @@ function StaffPortal({ role = "superadmin" }) {
 
   const tableForModal = tables.find((t) => t.id === showModalForTableId);
 
+  // Wrapper: start timer + optionally mark a linked booking as done
+  const handleStartTimerWithBooking = (tableId, mode, durationMinutes, options, linkedBookingId) => {
+    handleStartTimer(tableId, mode, durationMinutes, options);
+    if (linkedBookingId) {
+      markBookingAsDone(linkedBookingId).catch((err) =>
+        console.error("Failed to mark linked booking as done:", err)
+      );
+    }
+  };
+
   return (
     <div className="app">
       <header className="app-header">
@@ -167,6 +180,7 @@ function StaffPortal({ role = "superadmin" }) {
                 handlePayAndClear={handlePayAndClear}
                 handleToggleAvailability={handleToggleAvailability}
                 handleTransferTimer={handleTransferTimer}
+                upcomingBookings={upcomingBookings}
                 isSidebarOpen={isSidebarOpen}
                 cart={cart}
                 incrementQuantity={incrementQuantity}
@@ -202,7 +216,8 @@ function StaffPortal({ role = "superadmin" }) {
           table={tableForModal}
           isOpen={!!showModalForTableId}
           onClose={closeStartModal}
-          onStart={handleStartTimer}
+          onStart={handleStartTimerWithBooking}
+          upcomingBookings={upcomingBookings}
         />
       )}
 

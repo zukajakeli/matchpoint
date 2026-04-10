@@ -30,7 +30,7 @@ export default function EventsListPage() {
   return (
     <PublicLayout>
       <div className="mp-events-list-page">
-        <section className="mp-events-list-hero">
+        <section className="mp-events-list-hero mp-dots-white mp-grain">
           <h1>{t("events_title")}</h1>
           <p>{t("events_subtitle")}</p>
         </section>

@@ -64,7 +64,7 @@ export default function AdminAuthGate({ role = "superadmin", children }) {
     : "Enter the staff password to continue.";
 
   return (
-    <div className="admin-gate-overlay">
+    <div className="admin-gate-overlay mp-dots-white mp-grain-strong">
       <div className={`admin-gate-card${shake ? " admin-gate-shake" : ""}`}>
         <div className="admin-gate-logo">
           <img src="/matchpoint-logo.png" alt="MatchPoint" />

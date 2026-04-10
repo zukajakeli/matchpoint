@@ -41,7 +41,7 @@ export default function PublicLayout({ children }) {
         </div>
       </header>
       <main className="mp-public-main">{children}</main>
-      <footer className="mp-public-footer">
+      <footer className="mp-public-footer mp-halftone-fade mp-grain">
         <div className="mp-footer-inner">
           <div className="mp-footer-brand">
             <img src="/matchpoint-logo.png" alt={VENUE_NAME} />

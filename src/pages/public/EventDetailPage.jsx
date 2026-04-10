@@ -118,7 +118,7 @@ export default function EventDetailPage() {
 
   return (
     <PublicLayout>
-      <div className="mp-event-detail-page">
+      <div className="mp-event-detail-page mp-grain">
         {event.image && (
           <div className="mp-event-detail-cover">
             <img src={event.image} alt={event.title} />

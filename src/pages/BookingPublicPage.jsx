@@ -221,7 +221,7 @@ export default function BookingPublicPage() {
   return (
     <PublicLayout>
       <div className="mp-booking-page">
-        <section className="mp-booking-hero">
+        <section className="mp-booking-hero mp-dots-white mp-grain">
           <h1>{t("booking_title")}</h1>
           <p>
             {t("booking_subtitle_prefix")} {String(openHour).padStart(2, "0")}:00 – {closeLabel} {t("booking_subtitle_suffix")} {DAY_NAMES[dayOfWeek]}

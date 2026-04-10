@@ -111,6 +111,21 @@ export async function markBookingAsDone(id) {
   return { id, is_done: true, done_at: new Date().toISOString() };
 }
 
+export async function fetchDoneBookings(limit = 50) {
+  assertSupabase();
+  const { data, error } = await supabase
+    .from("bookings")
+    .select(BOOKINGS_SELECT)
+    .eq("is_done", true)
+    .order("done_at", { ascending: false })
+    .limit(limit);
+
+  if (!error) return (data || []).map(normalizeBooking);
+
+  // Fallback: if done_at column doesn't exist, return empty
+  return [];
+}
+
 export async function deleteBooking(id) {
   assertSupabase();
   const { error } = await supabase.from("bookings").delete().eq("id", id);

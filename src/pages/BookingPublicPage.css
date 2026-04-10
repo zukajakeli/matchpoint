@@ -121,7 +121,7 @@
   border: 2px solid #d1d5db;
   border-radius: 10px;
   font-size: 1rem;
-  font-family: "Poppins", sans-serif;
+  font-family: "DM Sans", sans-serif;
   background: #fff;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -152,7 +152,7 @@
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 600;
-  font-family: "Poppins", sans-serif;
+  font-family: "DM Sans", sans-serif;
   color: var(--mp-navy, #14243e);
   transition: all 0.2s;
 }
@@ -274,7 +274,7 @@
   cursor: pointer;
   padding: 0;
   margin-top: 6px;
-  font-family: "Poppins", sans-serif;
+  font-family: "DM Sans", sans-serif;
   transition: opacity 0.2s;
 }
 

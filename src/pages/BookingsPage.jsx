@@ -1,10 +1,11 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import BookingForm from "../components/bookings/BookingForm";
 import BookingList from "../components/bookings/BookingList";
 import {
   createBooking,
   deleteBooking,
   fetchBookings,
+  fetchDoneBookings,
   markBookingAsDone,
   subscribeToBookingsChanges,
 } from "../services/supabaseData";
@@ -16,6 +17,24 @@ const FILTER_TABS = [
   { id: "staff", label: "Staff" },
   { id: "pending", label: "Pending" },
 ];
+
+const GAME_LABELS = {
+  pingpong: "Ping-Pong",
+  foosball: "Foosball",
+  airhockey: "Air Hockey",
+  playstation: "PlayStation",
+};
+
+function formatHistoryDate(iso) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("en-GB", {
+    timeZone: "Asia/Tbilisi",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 function todayStart() {
   const d = new Date();
@@ -32,6 +51,9 @@ export default function BookingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeFilter, setActiveFilter] = useState("all");
+  const [showHistory, setShowHistory] = useState(false);
+  const [doneBookings, setDoneBookings] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   useEffect(() => {
     const loadBookings = async () => {
@@ -99,10 +121,34 @@ export default function BookingsPage() {
     }
   };
 
+  const loadHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    try {
+      const rows = await fetchDoneBookings(50);
+      setDoneBookings(rows);
+    } catch (error) {
+      console.error("Failed to load booking history:", error);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
+  // Load history when section is first opened
+  useEffect(() => {
+    if (showHistory && doneBookings.length === 0 && !historyLoading) {
+      loadHistory();
+    }
+  }, [showHistory, doneBookings.length, historyLoading, loadHistory]);
+
   const handleMarkDone = async (id) => {
     try {
+      const doneBooking = bookings.find((b) => b.id === id);
       await markBookingAsDone(id);
       setBookings((prev) => prev.filter((b) => b.id !== id));
+      // Add to history if visible
+      if (doneBooking && showHistory) {
+        setDoneBookings((prev) => [{ ...doneBooking, is_done: true, done_at: new Date().toISOString() }, ...prev]);
+      }
     } catch (error) {
       console.error("Failed to mark booking as done:", error);
     }
@@ -206,6 +252,72 @@ export default function BookingsPage() {
         onDelete={handleDelete}
         activeFilter={activeFilter}
       />
+
+      {/* Booking History */}
+      <div className="booking-history-section">
+        <button
+          className="booking-history-toggle"
+          onClick={() => setShowHistory((prev) => !prev)}
+        >
+          {showHistory ? "Hide" : "Show"} Booking History
+          <span className="history-toggle-arrow">{showHistory ? "▲" : "▼"}</span>
+        </button>
+
+        {showHistory && (
+          <div className="booking-history-list">
+            {historyLoading && (
+              <div className="menu-items-loading">
+                <span className="btn-spinner" aria-hidden="true" />
+                <span>Loading history...</span>
+              </div>
+            )}
+            {!historyLoading && doneBookings.length === 0 && (
+              <p className="booking-empty">No completed bookings yet.</p>
+            )}
+            {!historyLoading && doneBookings.length > 0 && (
+              <table className="booking-history-table">
+                <thead>
+                  <tr>
+                    <th>Customer</th>
+                    <th>Source</th>
+                    <th>Tables</th>
+                    <th>Duration</th>
+                    <th>Game</th>
+                    <th>Booked For</th>
+                    <th>Completed</th>
+                    <th>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {doneBookings.map((b) => (
+                    <tr key={b.id}>
+                      <td className="history-name">{b.customer_name}</td>
+                      <td>
+                        <span className={`source-badge ${b.booking_source === "online" ? "online" : "staff"}`}>
+                          {b.booking_source === "online" ? "Online" : "Staff"}
+                        </span>
+                      </td>
+                      <td>{b.tables_count}</td>
+                      <td>{b.hours_count ? `${b.hours_count}h` : "—"}</td>
+                      <td>{GAME_LABELS[b.game_type] || "—"}</td>
+                      <td>{formatHistoryDate(b.booking_at)}</td>
+                      <td>{formatHistoryDate(b.done_at)}</td>
+                      <td className="history-amount">
+                        {b.amount_charged != null ? `${Number(b.amount_charged).toFixed(2)} ₾` : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            {!historyLoading && doneBookings.length > 0 && (
+              <button className="history-refresh-btn" onClick={loadHistory}>
+                Refresh
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
