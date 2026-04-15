@@ -163,3 +163,34 @@
   color: var(--mp-gray, #6b7280);
   white-space: nowrap;
 }
+
+/* Game Rates */
+.game-rates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.game-rate-label {
+  gap: 6px;
+}
+
+.game-rate-name {
+  font-size: 0.92rem;
+}
+
+.game-rate-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.game-rate-input {
+  width: 90px;
+}
+
+.game-rate-unit {
+  font-size: 0.8rem;
+  color: var(--mp-gray, #6b7280);
+  white-space: nowrap;
+}

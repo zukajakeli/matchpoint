@@ -1,6 +1,7 @@
 // src/pages/SalesSettingsPage.jsx
 import React, { useEffect, useState } from "react";
 import { LOCAL_STORAGE_SALES_SETTINGS_KEY } from "../config";
+import { DEFAULT_GAME_RATES } from "../utils/gameRates";
 import {
   DAY_NAMES,
   DEFAULT_VENUE_HOURS,
@@ -17,6 +18,10 @@ function SalesSettingsPage() {
   const [saleHourlyRate, setSaleHourlyRate] = useState(12);
   const [saleSaved, setSaleSaved] = useState(false);
 
+  // ── Per-game-type pricing ────────────────────────────────────────────────
+  const [gameRates, setGameRates] = useState({ ...DEFAULT_GAME_RATES });
+  const [ratesSaved, setRatesSaved] = useState(false);
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem(LOCAL_STORAGE_SALES_SETTINGS_KEY);
@@ -25,21 +30,46 @@ function SalesSettingsPage() {
         if (typeof parsed.saleFromHour === "number") setSaleFromHour(parsed.saleFromHour);
         if (typeof parsed.saleToHour === "number") setSaleToHour(parsed.saleToHour);
         if (typeof parsed.saleHourlyRate === "number") setSaleHourlyRate(parsed.saleHourlyRate);
+        if (parsed.gameRates) setGameRates((prev) => ({ ...prev, ...parsed.gameRates }));
       }
     } catch (e) {
       console.error("Failed to load sales settings:", e);
     }
   }, []);
 
-  const handleSaleSave = () => {
+  // Save all settings together (sale window + game rates share the same key)
+  const saveAll = (overrides = {}) => {
+    const existing = (() => {
+      try {
+        const raw = localStorage.getItem(LOCAL_STORAGE_SALES_SETTINGS_KEY);
+        return raw ? JSON.parse(raw) : {};
+      } catch { return {}; }
+    })();
     const payload = {
+      ...existing,
       saleFromHour: Number(saleFromHour),
       saleToHour: Number(saleToHour),
       saleHourlyRate: Number(saleHourlyRate),
+      gameRates: { ...gameRates },
+      ...overrides,
     };
     localStorage.setItem(LOCAL_STORAGE_SALES_SETTINGS_KEY, JSON.stringify(payload));
+  };
+
+  const handleSaleSave = () => {
+    saveAll();
     setSaleSaved(true);
     setTimeout(() => setSaleSaved(false), 1500);
+  };
+
+  const handleRatesSave = () => {
+    saveAll();
+    setRatesSaved(true);
+    setTimeout(() => setRatesSaved(false), 1500);
+  };
+
+  const handleRateChange = (key, value) => {
+    setGameRates((prev) => ({ ...prev, [key]: value }));
   };
 
   // ── Venue opening-hours settings ─────────────────────────────────────────
@@ -115,6 +145,42 @@ function SalesSettingsPage() {
         <p className="help-text">
           Example: 12 → 15 at 12 GEL/hr means 14:30–15:30 costs 6 GEL (sale) + regular thereafter.
         </p>
+      </div>
+
+      {/* ── Per-game pricing card ── */}
+      <h3 className="settings-section-title" style={{ marginTop: 32 }}>Game Pricing</h3>
+      <div className="settings-card">
+        <p className="help-text" style={{ marginTop: 0, marginBottom: 16 }}>
+          Set the hourly rate for each game type and extra equipment pricing.
+        </p>
+        <div className="game-rates-grid">
+          {[
+            { key: "pingpong", label: "Ping-Pong", unit: "GEL / hour" },
+            { key: "foosball", label: "Foosball", unit: "GEL / hour" },
+            { key: "airhockey", label: "Air Hockey", unit: "GEL / hour" },
+            { key: "playstation", label: "PlayStation", unit: "GEL / hour" },
+            { key: "equipmentBonus", label: "Extra Equipment", unit: "GEL / hour extra" },
+          ].map(({ key, label, unit }) => (
+            <label key={key} className="settings-label game-rate-label">
+              <span className="game-rate-name">{label}</span>
+              <div className="game-rate-input-group">
+                <input
+                  className="settings-input game-rate-input"
+                  type="number"
+                  min={0}
+                  step="0.5"
+                  value={gameRates[key]}
+                  onChange={(e) => handleRateChange(key, e.target.value)}
+                />
+                <span className="game-rate-unit">{unit}</span>
+              </div>
+            </label>
+          ))}
+        </div>
+        <div className="actions">
+          <button className="save-btn" onClick={handleRatesSave}>Save Pricing</button>
+          {ratesSaved && <span className="saved-chip">Saved!</span>}
+        </div>
       </div>
 
       {/* ── Venue hours card ── */}

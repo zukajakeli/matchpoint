@@ -139,7 +139,7 @@ function StaffPortal({ role = "superadmin" }) {
 
   return (
     <div className="app">
-      <header className="app-header">
+      <header className="app-header mp-halftone-fade mp-grain">
         <Link className="logo" to={basePath}>
           <h1>
             <img src="/matchpoint-logo.png" alt="MatchPoint logo" className="header-logo-image" />

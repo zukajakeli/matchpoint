@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase, isSupabaseConfigured } from "../services/supabaseClient";
 import { useTranslation } from "../i18n/LanguageContext";
 import { loadVenueHours, DAY_NAMES } from "../utils/venueHours";
+import { loadGameRates } from "../utils/gameRates";
 import PublicLayout from "../components/landing/PublicLayout";
 import "./BookingPublicPage.css";
 
@@ -12,12 +13,14 @@ const APP_URL = import.meta.env.VITE_APP_URL || window.location.origin;
 
 const TABLE_COUNT = 12;
 
-const GAME_TYPES = [
-  { value: "pingpong", label: "Ping-Pong", rate: 16 },
-  { value: "foosball", label: "Foosball", rate: 12 },
-  { value: "airhockey", label: "Air Hockey", rate: 12 },
-  { value: "playstation", label: "PlayStation", rate: 16 },
-];
+function buildGameTypes(rates) {
+  return [
+    { value: "pingpong", label: "Ping-Pong", rate: rates.pingpong },
+    { value: "foosball", label: "Foosball", rate: rates.foosball },
+    { value: "airhockey", label: "Air Hockey", rate: rates.airhockey },
+    { value: "playstation", label: "PlayStation", rate: rates.playstation },
+  ];
+}
 
 const DURATIONS = [
   { value: 1, label: "1 hour" },
@@ -105,6 +108,8 @@ async function checkAvailability(bookingAtISO, hoursCount) {
 export default function BookingPublicPage() {
   const { t } = useTranslation();
   const venueHours = loadVenueHours();
+  const rates = useMemo(() => loadGameRates(), []);
+  const GAME_TYPES = useMemo(() => buildGameTypes(rates), [rates]);
   const dateOptions = buildDateOptions();
 
   const [selectedDate, setSelectedDate] = useState(dateOptions[0].value);
@@ -195,6 +200,7 @@ export default function BookingPublicPage() {
             hoursCount: Number(duration),
             bookingAt,
             gameType,
+            ratePerHour: selectedGame.rate,
             responseUrl: `${APP_URL}/book/success`,
             cancelUrl: `${APP_URL}/book/cancelled`,
           }),

@@ -1,4 +1,5 @@
 import { calculateSegmentedPrice } from "./utils";
+import { loadGameRates, FITPASS_RATE } from "./gameRates";
 
 export function loadSalesSettings(storageKey) {
   let sales = { saleFromHour: 12, saleToHour: 15, saleHourlyRate: 12 };
@@ -24,7 +25,8 @@ export function getTableCardViewModel(table, hourlyRate, sales) {
     hourlyRate: customHourlyRate,
     extraEquipment,
   } = table;
-  const equipmentBonus = extraEquipment ? 5 : 0;
+  const rates = loadGameRates();
+  const equipmentBonus = extraEquipment ? rates.equipmentBonus : 0;
 
   let displayTimeSeconds = 0;
   let currentCost = "0.00";
@@ -42,10 +44,11 @@ export function getTableCardViewModel(table, hourlyRate, sales) {
       : 0;
 
     if (gameType === "foosball" || gameType === "airhockey") {
-      const ratePerSecond = 12 / 3600;
+      const gameRate = rates[gameType] || 12;
+      const ratePerSecond = gameRate / 3600;
       sessionCost = ((initialCountdownSeconds || 0) * ratePerSecond).toFixed(2);
     } else if (fitPass) {
-      const ratePerSecond = 6 / (30 * 60);
+      const ratePerSecond = FITPASS_RATE / (30 * 60);
       sessionCost = ((initialCountdownSeconds || 0) * ratePerSecond).toFixed(2);
     } else if (hasCustomRate) {
       const ratePerSecond = (customHourlyRate + equipmentBonus) / 3600;
@@ -70,10 +73,11 @@ export function getTableCardViewModel(table, hourlyRate, sales) {
         ? elapsedTimeInSeconds + (Date.now() - timerStartTime) / 1000
         : elapsedTimeInSeconds;
     if (gameType === "foosball" || gameType === "airhockey") {
-      const ratePerSecond = 12 / 3600;
+      const gameRate = rates[gameType] || 12;
+      const ratePerSecond = gameRate / 3600;
       currentCost = (displayTimeSeconds * ratePerSecond).toFixed(2);
     } else if (fitPass) {
-      const ratePerSecond = 6 / (30 * 60);
+      const ratePerSecond = FITPASS_RATE / (30 * 60);
       currentCost = (displayTimeSeconds * ratePerSecond).toFixed(2);
     } else if (hasCustomRate) {
       const ratePerSecond = (customHourlyRate + equipmentBonus) / 3600;

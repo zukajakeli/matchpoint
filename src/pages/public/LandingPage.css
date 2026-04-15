@@ -149,12 +149,15 @@
   padding: 80px 24px;
   max-width: 1200px;
   margin: 0 auto;
+  text-align: center;
 }
 
 .mp-section-alt {
   background: var(--mp-off-white, #f4f5f7);
   max-width: none;
+  padding: 80px 24px;
   text-align: center;
+  margin: 0;
 }
 
 .mp-section-alt > * {
@@ -165,6 +168,10 @@
 
 .mp-section-alt .mp-section-title {
   width: 100%;
+  text-align: center;
+}
+
+.mp-section-alt .mp-section-cta {
   text-align: center;
 }
 

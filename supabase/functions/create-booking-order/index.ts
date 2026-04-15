@@ -59,6 +59,7 @@ Deno.serve(async (req) => {
       hoursCount,
       bookingAt,
       gameType,
+      ratePerHour,
       responseUrl,
       cancelUrl,
     } = await req.json();
@@ -115,8 +116,11 @@ Deno.serve(async (req) => {
     }
 
     // --- Determine rate (GEL/hr per table) ---
+    // Use client-sent rate (from admin-configurable settings) with sensible fallbacks
+    const defaultRate =
+      gameType === "foosball" || gameType === "airhockey" ? 12 : gameType === "playstation" ? 20 : 16;
     const ratePerTablePerHour =
-      gameType === "foosball" || gameType === "airhockey" ? 12 : 16;
+      typeof ratePerHour === "number" && ratePerHour > 0 ? ratePerHour : defaultRate;
     const amountGel = tablesCount * hoursCount * ratePerTablePerHour;
     const amountTetri = Math.round(amountGel * 100);
 

@@ -1,10 +1,12 @@
 import { TABLE_COUNT } from "../config";
+import { loadGameRates } from "./gameRates";
 
 function getDefaultTableById(id) {
+  const rates = loadGameRates();
   const defaults = {
     9: { name: "Foosball", gameType: "foosball", hourlyRate: null },
     10: { name: "Air hockey", gameType: "airhockey", hourlyRate: null },
-    11: { name: "PlayStation", gameType: "playstation", hourlyRate: 20 },
+    11: { name: "PlayStation", gameType: "playstation", hourlyRate: rates.playstation },
     12: { name: "Blank Timer", gameType: "custom", hourlyRate: null },
   };
   const special = defaults[id] || { name: `Table ${id}`, gameType: "pingpong" };
@@ -89,7 +91,8 @@ function enforceGameTableOrder(normalized) {
     rebuilt.push(createSpecialTable(rebuilt.length + 1, "Air hockey", "airhockey"));
   }
   if (!playstation && rebuilt.length < TABLE_COUNT) {
-    rebuilt.push(createSpecialTable(rebuilt.length + 1, "PlayStation", "playstation", 20));
+    const rates = loadGameRates();
+    rebuilt.push(createSpecialTable(rebuilt.length + 1, "PlayStation", "playstation", rates.playstation));
   }
   if (!custom && rebuilt.length < TABLE_COUNT) {
     rebuilt.push(createSpecialTable(rebuilt.length + 1, "Blank Timer", "custom"));

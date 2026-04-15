@@ -1,5 +1,5 @@
 // src/components/TableCard.jsx
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { formatTime, playTableEndSound } from "../utils/utils";
 import "./TableCard.css";
 import SwitchToggle from "./SwitchToggle";
@@ -31,6 +31,35 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
     canPayAndClear,
     isCountdownEnded,
   } = getTableCardViewModel(table, HOURLY_RATE, sales);
+
+  const [showStopPrompt, setShowStopPrompt] = useState(false);
+  const promptRef = useRef(null);
+
+  // Close prompt on outside click
+  useEffect(() => {
+    if (!showStopPrompt) return;
+    const handler = (e) => {
+      if (promptRef.current && !promptRef.current.contains(e.target)) {
+        setShowStopPrompt(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showStopPrompt]);
+
+  // Auto-dismiss prompt when timer stops
+  useEffect(() => {
+    if (!isRunning) setShowStopPrompt(false);
+  }, [isRunning]);
+
+  // Pay & Clear: block if timer is still running (unless countdown ended)
+  const handlePayClear = () => {
+    if (isRunning && !isCountdownEnded) {
+      setShowStopPrompt(true);
+      return;
+    }
+    onPayAndClear(table.id);
+  };
 
   if (!isAvailable) {
     return (
@@ -103,6 +132,11 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
           ? `Session Cost: ${sessionCost} GEL`
           : `Current Cost: ${currentCost} GEL`}
       </div>
+      {(isRunning || elapsedTimeInSeconds > 0 || isCountdownEnded) && (
+        <div className={`table-payment-badge ${timerMode === "countdown" ? "paid" : "unpaid"}`}>
+          {timerMode === "countdown" ? "Paid" : "Unpaid"}
+        </div>
+      )}
       <div className="controls">
         <button
           onClick={() => playTableEndSound(table.id, table.gameType)}
@@ -125,13 +159,29 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
             Stop
           </button>
         )}
-        <button
-          onClick={() => onPayAndClear(table.id)}
-          className="pay-clear-btn"
-          disabled={!canPayAndClear}
-        >
-          Pay & Clear
-        </button>
+        <div className="pay-clear-wrapper" ref={promptRef}>
+          <button
+            onClick={handlePayClear}
+            className="pay-clear-btn"
+            disabled={!canPayAndClear}
+          >
+            Pay & Clear
+          </button>
+          {showStopPrompt && (
+            <div className="stop-prompt">
+              Stop the timer first!
+              <button
+                className="stop-prompt-btn"
+                onClick={() => {
+                  onStop(table.id);
+                  setShowStopPrompt(false);
+                }}
+              >
+                Stop Now
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

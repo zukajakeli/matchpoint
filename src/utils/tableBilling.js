@@ -1,4 +1,5 @@
 import { calculateSegmentedPrice } from "./utils";
+import { loadGameRates, FITPASS_RATE } from "./gameRates";
 
 export function getFinalElapsedTimeInSeconds(table) {
   let finalElapsedTimeInSeconds = table.elapsedTimeInSeconds;
@@ -40,6 +41,7 @@ export function calculateBillingSummary({
   const endTimeMsForBilling =
     table.timerMode === "countdown" ? purchasedEndMsForCountdown : standardEndMs;
 
+  const rates = loadGameRates();
   let amountToPay = 0;
   const hasCustomRate =
     typeof table.hourlyRate === "number" && table.hourlyRate > 0;
@@ -50,14 +52,15 @@ export function calculateBillingSummary({
       table.timerMode === "countdown"
         ? table.initialCountdownSeconds || 0
         : finalElapsedTimeInSeconds;
-    const ratePerSecond = 12 / 3600;
+    const gameRate = rates[table.gameType] || 12;
+    const ratePerSecond = gameRate / 3600;
     amountToPay = seconds * ratePerSecond;
   } else if (table.fitPass) {
     const seconds =
       table.timerMode === "countdown"
         ? table.initialCountdownSeconds || 0
         : finalElapsedTimeInSeconds;
-    const ratePerSecond = 6 / (30 * 60);
+    const ratePerSecond = FITPASS_RATE / (30 * 60);
     amountToPay = seconds * ratePerSecond;
   } else if (hasCustomRate) {
     const seconds =

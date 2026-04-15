@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import "./StartModal.css";
 import StartModalContentFields from "./start-modal/StartModalContentFields";
+import { loadGameRates } from "../utils/gameRates";
 
 // Check if starting this timer would overlap with any upcoming paid booking.
 // Returns an array of conflicting bookings (empty = no conflict).
@@ -119,13 +120,14 @@ const StartModal = ({ table, isOpen, onClose, onStart, upcomingBookings }) => {
       return;
     }
 
+    const rates = loadGameRates();
     const customOptions = isCustomTimer
       ? {
           customName: customName.trim(),
           customHourlyRate: parseFloat(customHourlyRate),
         }
       : isPlayStation
-      ? { customHourlyRate: 20 }
+      ? { customHourlyRate: rates.playstation }
       : {};
 
     onStart(
