@@ -6,6 +6,7 @@ import {
   formatPhone,
   formatDuration,
   venueParts,
+  eligibleRewards,
 } from "../utils/memberAnalytics";
 
 // Tbilisi is UTC+4 all year.
@@ -138,5 +139,28 @@ describe("formatDuration", () => {
     expect(formatDuration(5400)).toBe("1h 30m");
     expect(formatDuration(3600)).toBe("1h");
     expect(formatDuration(1500)).toBe("25m");
+  });
+});
+
+describe("eligibleRewards", () => {
+  const rewards = [
+    { id: "drink", points_required: 100, is_active: true },
+    { id: "half", points_required: 300, is_active: true, max_per_member: 1 },
+    { id: "hour", points_required: 500, is_active: true },
+    { id: "old", points_required: 50, is_active: true, expires_at: "2026-01-01T00:00:00Z" },
+  ];
+  const member = { status: "active", points_balance: 340 };
+
+  it("lists affordable, unexpired rewards under their limit", () => {
+    expect(eligibleRewards(member, rewards, {}, NOW).map((r) => r.id)).toEqual(["drink", "half"]);
+  });
+
+  it("drops rewards the member already used up", () => {
+    expect(eligibleRewards(member, rewards, { half: 1 }, NOW).map((r) => r.id)).toEqual(["drink"]);
+  });
+
+  it("offers nothing to inactive members or without a known balance", () => {
+    expect(eligibleRewards({ ...member, status: "suspended" }, rewards, {}, NOW)).toEqual([]);
+    expect(eligibleRewards({ status: "active" }, rewards, {}, NOW)).toEqual([]);
   });
 });

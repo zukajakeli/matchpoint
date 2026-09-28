@@ -218,3 +218,17 @@ export function formatDate(iso) {
     timeZone: VENUE_TIME_ZONE,
   });
 }
+
+// Rewards a member can redeem right now — the same checks redeem_reward()
+// makes in the database: active, not expired, enough points, and under the
+// per-member limit. redemptionCounts: { [rewardId]: timesRedeemed }.
+export function eligibleRewards(member, rewards, redemptionCounts = {}, nowMs = Date.now()) {
+  if (!member || member.status !== "active" || member.points_balance === undefined) return [];
+  return rewards.filter(
+    (r) =>
+      r.is_active !== false &&
+      (!r.expires_at || new Date(r.expires_at).getTime() > nowMs) &&
+      member.points_balance >= r.points_required &&
+      (!r.max_per_member || (redemptionCounts[r.id] || 0) < r.max_per_member)
+  );
+}

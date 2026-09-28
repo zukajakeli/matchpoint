@@ -169,6 +169,23 @@ export async function fetchRewards({ includeInactive = false } = {}) {
   return data || [];
 }
 
+// { [memberId]: { [rewardId]: timesRedeemed } } — for reward eligibility.
+export async function fetchRedemptionCounts(memberIds) {
+  assertSupabase();
+  if (!memberIds.length) return {};
+  const { data, error } = await supabase
+    .from("reward_redemptions")
+    .select("member_id, reward_id")
+    .in("member_id", memberIds);
+  if (error) throw error;
+  const counts = {};
+  (data || []).forEach(({ member_id, reward_id }) => {
+    counts[member_id] = counts[member_id] || {};
+    counts[member_id][reward_id] = (counts[member_id][reward_id] || 0) + 1;
+  });
+  return counts;
+}
+
 export async function saveReward(reward) {
   assertSupabase();
   const payload = {

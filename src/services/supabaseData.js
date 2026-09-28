@@ -47,6 +47,7 @@ export {
   adjustMemberPoints,
   redeemReward,
   fetchRewards,
+  fetchRedemptionCounts,
   saveReward,
   deleteReward,
   fetchMemberDirectory,

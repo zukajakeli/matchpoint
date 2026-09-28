@@ -224,3 +224,85 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Reward available — meant to be impossible to miss at reception */
+.member-card-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.member-card.has-rewards {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.member-rewards-banner {
+  padding: 10px 12px 12px;
+  border-radius: 0 0 12px 12px;
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(249, 115, 22, 0.35);
+  animation: member-rewards-pulse 1.6s ease-in-out 3;
+}
+
+.member-rewards-title {
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: 0.2px;
+}
+
+.member-rewards-title span {
+  display: inline-block;
+  margin-right: 4px;
+  animation: member-rewards-wiggle 1.2s ease-in-out infinite;
+}
+
+.member-rewards-list {
+  list-style: none;
+  margin: 6px 0 4px;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.member-rewards-list li {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  font-size: 0.85rem;
+}
+
+.member-rewards-hint {
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+.member-picker-gift {
+  margin-right: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f97316;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.72rem;
+}
+
+@keyframes member-rewards-pulse {
+  0%, 100% { box-shadow: 0 6px 18px rgba(249, 115, 22, 0.35); }
+  50% { box-shadow: 0 6px 28px rgba(249, 115, 22, 0.75); }
+}
+
+@keyframes member-rewards-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-12deg); }
+  75% { transform: rotate(12deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .member-rewards-banner,
+  .member-rewards-title span {
+    animation: none;
+  }
+}

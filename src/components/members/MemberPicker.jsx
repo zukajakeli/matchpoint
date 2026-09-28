@@ -1,6 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
-import { findMembers, registerMember, memberErrorMessage } from "../../services/supabaseData";
-import { formatPhone, normalizePhone } from "../../utils/memberAnalytics";
+import {
+  findMembers,
+  registerMember,
+  memberErrorMessage,
+  fetchRewards,
+  fetchRedemptionCounts,
+} from "../../services/supabaseData";
+import { eligibleRewards, formatPhone, normalizePhone } from "../../utils/memberAnalytics";
 import "./MemberPicker.css";
 
 function memberSince(iso) {
@@ -12,34 +18,61 @@ function memberSince(iso) {
   });
 }
 
-export function MemberCard({ member, onClear, clearLabel = "Change" }) {
+// Loud on purpose: reception should tell the member on the spot.
+function RewardsBanner({ rewards }) {
+  if (!rewards?.length) return null;
   return (
-    <div className={`member-card ${member.status !== "active" ? "inactive" : ""}`}>
-      <div className="member-card-main">
-        <div className="member-card-name">
-          {member.first_name} {member.last_name}
-          <span className="member-card-code">{member.member_code}</span>
+    <div className="member-rewards-banner" role="status">
+      <div className="member-rewards-title">
+        <span aria-hidden="true">🎁</span> Reward available — tell the member!
+      </div>
+      <ul className="member-rewards-list">
+        {rewards.map((r) => (
+          <li key={r.id}>
+            <strong>{r.name}</strong> · {r.points_required} pts
+          </li>
+        ))}
+      </ul>
+      <div className="member-rewards-hint">Redeem it from their profile in Club.</div>
+    </div>
+  );
+}
+
+export function MemberCard({ member, onClear, clearLabel = "Change", rewards = [] }) {
+  return (
+    <div className="member-card-wrap">
+      <div
+        className={`member-card ${member.status !== "active" ? "inactive" : ""} ${
+          rewards.length ? "has-rewards" : ""
+        }`}
+      >
+        <div className="member-card-main">
+          <div className="member-card-name">
+            {member.first_name} {member.last_name}
+            <span className="member-card-code">{member.member_code}</span>
+          </div>
+          {member.registered_at && (
+            <div className="member-card-meta">
+              Member since {memberSince(member.registered_at)} · {formatPhone(member.phone)}
+            </div>
+          )}
+          {member.status !== "active" && (
+            <div className="member-card-warning">Membership {member.status}</div>
+          )}
         </div>
-        {member.registered_at && (
-          <div className="member-card-meta">
-            Member since {memberSince(member.registered_at)} · {formatPhone(member.phone)}
+        {member.points_balance !== undefined && (
+          <div className="member-card-points">
+            <strong>{member.points_balance}</strong>
+            <span>points</span>
           </div>
         )}
-        {member.status !== "active" && (
-          <div className="member-card-warning">Membership {member.status}</div>
+        {onClear && (
+          <button type="button" className="member-card-clear" onClick={onClear}>
+            {clearLabel}
+          </button>
         )}
       </div>
-      {member.points_balance !== undefined && (
-        <div className="member-card-points">
-          <strong>{member.points_balance}</strong>
-          <span>points</span>
-        </div>
-      )}
-      {onClear && (
-        <button type="button" className="member-card-clear" onClick={onClear}>
-          {clearLabel}
-        </button>
-      )}
+      <RewardsBanner rewards={rewards} />
     </div>
   );
 }
@@ -56,7 +89,31 @@ export default function MemberPicker({ selected, onSelect, autoFocus = false }) 
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
+  const [rewards, setRewards] = useState([]);
+  const [redemptionCounts, setRedemptionCounts] = useState({});
   const inputRef = useRef(null);
+
+  // Active rewards once; per-member redemption counts for whoever is shown,
+  // so "reward available" respects per-member limits.
+  useEffect(() => {
+    fetchRewards()
+      .then(setRewards)
+      .catch((error) => console.error("Failed to load rewards:", error));
+  }, []);
+
+  const shownIds = [...results.map((m) => m.id), selected?.id].filter(Boolean).sort().join(",");
+  useEffect(() => {
+    if (!shownIds || rewards.length === 0) return undefined;
+    let cancelled = false;
+    fetchRedemptionCounts(shownIds.split(","))
+      .then((counts) => !cancelled && setRedemptionCounts(counts))
+      .catch((error) => console.error("Failed to load redemptions:", error));
+    return () => {
+      cancelled = true;
+    };
+  }, [shownIds, rewards.length]);
+
+  const rewardsFor = (member) => eligibleRewards(member, rewards, redemptionCounts[member.id]);
 
   useEffect(() => {
     if (autoFocus && !selected) inputRef.current?.focus();
@@ -92,7 +149,7 @@ export default function MemberPicker({ selected, onSelect, autoFocus = false }) 
   }, [query]);
 
   if (selected) {
-    return <MemberCard member={selected} onClear={() => onSelect(null)} />;
+    return <MemberCard member={selected} onClear={() => onSelect(null)} rewards={rewardsFor(selected)} />;
   }
 
   if (isRegistering) {
@@ -146,6 +203,7 @@ export default function MemberPicker({ selected, onSelect, autoFocus = false }) 
                   {m.status !== "active" && <em> · {m.status}</em>}
                 </span>
                 <span className="member-picker-result-meta">
+                  {rewardsFor(m).length > 0 && <span className="member-picker-gift">🎁 Reward</span>}
                   {formatPhone(m.phone)} · {m.points_balance} pts
                 </span>
               </button>
