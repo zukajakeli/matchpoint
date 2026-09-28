@@ -65,7 +65,16 @@
 
 .mp-header-nav {
   display: flex;
+  align-items: center;
   gap: 4px;
+  margin-left: auto;
+}
+
+.mp-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .mp-nav-link {
@@ -86,6 +95,32 @@
 .mp-nav-link.active {
   color: var(--mp-navy);
   background: var(--mp-lime);
+}
+
+/* "My Club" — always stands out as the member entry point */
+.mp-nav-club {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 6px;
+  white-space: nowrap;
+  color: var(--mp-lime);
+  border: 1.5px solid var(--mp-lime);
+  box-shadow: 0 0 0 0 rgba(213, 242, 150, 0.45);
+}
+
+.mp-nav-club:hover {
+  color: var(--mp-navy);
+  background: var(--mp-lime);
+  box-shadow: 0 0 16px rgba(213, 242, 150, 0.45);
+}
+
+.mp-nav-club.active {
+  border-color: var(--mp-lime);
+}
+
+.mp-nav-club-icon {
+  flex-shrink: 0;
 }
 
 /* ── Main ────────────────────────────────────────────────────────────── */
@@ -214,8 +249,27 @@
     padding: 0 16px;
   }
 
+  .mp-header-inner {
+    gap: 8px;
+  }
+
+  /* links scroll sideways instead of pushing the page wider */
   .mp-header-nav {
     gap: 2px;
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent);
+    mask-image: linear-gradient(90deg, #000 85%, transparent);
+  }
+
+  .mp-header-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mp-nav-link {
+    white-space: nowrap;
   }
 
   .mp-nav-link {
@@ -240,5 +294,15 @@
   .mp-nav-link {
     font-size: 0.72rem;
     padding: 6px 8px;
+  }
+
+  /* icon-only on small phones so the header still fits */
+  .mp-nav-club {
+    margin-left: 2px;
+    padding: 6px;
+  }
+
+  .mp-nav-club-label {
+    display: none;
   }
 }

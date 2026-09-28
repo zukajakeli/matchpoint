@@ -16,8 +16,8 @@ export default function PublicLayout({ children }) {
     { to: "/events", label: t("nav_events") },
     { to: "/blog", label: t("nav_blog") },
     { to: "/contact", label: t("nav_contact") },
-    { to: "/account", label: t("nav_account") },
   ];
+  const clubLink = { to: "/account", label: t("nav_account") };
 
   return (
     <div className="mp-public-layout">
@@ -37,8 +37,22 @@ export default function PublicLayout({ children }) {
                 {link.label}
               </Link>
             ))}
-            <LanguageSwitcher />
           </nav>
+          {/* Always visible, even when the links scroll on small screens */}
+          <div className="mp-header-actions">
+            {/* Member account: a button, not just another link */}
+            <Link
+              to={clubLink.to}
+              className={`mp-nav-link mp-nav-club ${location.pathname === clubLink.to ? "active" : ""}`}
+            >
+              <svg className="mp-nav-club-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2.2" />
+                <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+              </svg>
+              <span className="mp-nav-club-label">{clubLink.label}</span>
+            </Link>
+            <LanguageSwitcher />
+          </div>
         </div>
       </header>
       <main className="mp-public-main">{children}</main>
@@ -49,7 +63,7 @@ export default function PublicLayout({ children }) {
             <span>{VENUE_NAME}</span>
           </div>
           <div className="mp-footer-links">
-            {navLinks.map((link) => (
+            {[...navLinks, clubLink].map((link) => (
               <Link key={link.to} to={link.to}>{link.label}</Link>
             ))}
           </div>
