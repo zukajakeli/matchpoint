@@ -214,7 +214,7 @@ const translations = {
 
     // ── CTA ──
     cta_title: "მზად ხარ სათამაშოდ?",
-    cta_subtitle: "დაჯავშნე მაგიდა ონლაინ წამებში.",
+    cta_subtitle: "დაჯავშნე მაგიდა იმწუთში",
     cta_book: "დაჯავშნე ახლა",
 
     // ── Footer ──
