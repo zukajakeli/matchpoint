@@ -64,8 +64,9 @@ export default function EventDetailPage() {
             participantEmail: email.trim(),
             participantPhone: phone.trim(),
             paymentMethod: isFree ? "offline" : paymentMethod,
-            responseUrl: `${APP_URL}/events/${id}?registered=true`,
-            cancelUrl: `${APP_URL}/events/${id}?cancelled=true`,
+            // Flitt returns with a POST; /api/flitt-return turns it into a GET.
+            responseUrl: `${APP_URL}/api/flitt-return?to=${encodeURIComponent(`/events/${id}?registered=true`)}`,
+            cancelUrl: `${APP_URL}/api/flitt-return?to=${encodeURIComponent(`/events/${id}?cancelled=true`)}`,
           }),
         });
 

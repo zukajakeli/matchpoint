@@ -210,8 +210,9 @@ export default function BookingPublicPage() {
             hoursCount: Number(duration),
             bookingAt,
             gameType,
-            responseUrl: `${APP_URL}/book/success`,
-            cancelUrl: `${APP_URL}/book/cancelled`,
+            // Flitt returns with a POST; /api/flitt-return turns it into a GET.
+            responseUrl: `${APP_URL}/api/flitt-return?to=${encodeURIComponent("/book/success")}`,
+            cancelUrl: `${APP_URL}/api/flitt-return?to=${encodeURIComponent("/book/cancelled")}`,
           }),
         });
 
