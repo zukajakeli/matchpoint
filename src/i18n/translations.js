@@ -5,6 +5,8 @@ const translations = {
   en: {
     // ── Club member account ──
     nav_account: "My Club",
+    nav_menu: "Menu",
+    nav_close: "Close menu",
     acc_title: "Club Account",
     acc_login_title: "Sign in to your Club account",
     acc_login_subtitle: "Use the email you gave at reception. We'll send you a sign-in link.",
@@ -144,6 +146,8 @@ const translations = {
   ka: {
     // ── Club member account ──
     nav_account: "ჩემი კლუბი",
+    nav_menu: "მენიუ",
+    nav_close: "მენიუს დახურვა",
     acc_title: "კლუბის ანგარიში",
     acc_login_title: "შედით კლუბის ანგარიშში",
     acc_login_subtitle: "მიუთითეთ ელფოსტა, რომელიც რეგისტრაციისას დაგვიტოვეთ. გამოგიგზავნით შესვლის ბმულს.",

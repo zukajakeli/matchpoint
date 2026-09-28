@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "../../i18n/LanguageContext";
 import LanguageSwitcher from "./LanguageSwitcher";
@@ -18,6 +18,27 @@ export default function PublicLayout({ children }) {
     { to: "/contact", label: t("nav_contact") },
   ];
   const clubLink = { to: "/account", label: t("nav_account") };
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Close the mobile menu whenever the route changes
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
+
+  // Lock page scroll and allow Escape to close while the menu is open
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
 
   return (
     <div className="mp-public-layout">
@@ -52,9 +73,59 @@ export default function PublicLayout({ children }) {
               <span className="mp-nav-club-label">{clubLink.label}</span>
             </Link>
             <LanguageSwitcher />
+            <button
+              type="button"
+              className={`mp-burger ${menuOpen ? "open" : ""}`}
+              aria-label={menuOpen ? t("nav_close") : t("nav_menu")}
+              aria-expanded={menuOpen}
+              aria-controls="mp-mobile-menu"
+              onClick={() => setMenuOpen((o) => !o)}
+            >
+              <span />
+              <span />
+              <span />
+            </button>
           </div>
         </div>
       </header>
+      <div
+        id="mp-mobile-menu"
+        className={`mp-mobile-menu ${menuOpen ? "open" : ""}`}
+        aria-hidden={!menuOpen}
+        inert={!menuOpen}
+      >
+        <div className="mp-mobile-menu-ball" aria-hidden="true" />
+        <div className="mp-mobile-menu-ball small" aria-hidden="true" />
+        <nav className="mp-mobile-menu-nav">
+          {navLinks.map((link, i) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              style={{ "--i": i }}
+              className={`mp-mobile-link ${location.pathname === link.to ? "active" : ""}`}
+              onClick={() => setMenuOpen(false)}
+            >
+              <span className="mp-mobile-link-num">{String(i + 1).padStart(2, "0")}</span>
+              <span className="mp-mobile-link-label">{link.label}</span>
+              <svg className="mp-mobile-link-arrow" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </Link>
+          ))}
+        </nav>
+        <Link
+          to={clubLink.to}
+          style={{ "--i": navLinks.length }}
+          className="mp-mobile-club"
+          onClick={() => setMenuOpen(false)}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2.2" />
+            <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+          </svg>
+          {clubLink.label}
+        </Link>
+      </div>
       <main className="mp-public-main">{children}</main>
       <footer className="mp-public-footer mp-halftone-fade mp-grain">
         <div className="mp-footer-inner">
