@@ -301,3 +301,11 @@
 .override-btn:hover {
   box-shadow: 0 6px 24px rgba(230, 126, 34, 0.5) !important;
 }
+
+/* Club member lookup at the top of the Start modal */
+.start-modal-member {
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--mp-off-white, #f0f2f5);
+  text-align: left;
+}

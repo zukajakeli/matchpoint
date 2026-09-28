@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase, isSupabaseConfigured } from "../services/supabaseClient";
 import { useTranslation } from "../i18n/LanguageContext";
-import { loadVenueHours, DAY_NAMES } from "../utils/venueHours";
-import { loadGameRates } from "../utils/gameRates";
+import { DEFAULT_VENUE_HOURS, DAY_NAMES } from "../utils/venueHours";
+import { DEFAULT_GAME_RATES } from "../utils/gameRates";
+import { BOOKABLE_TABLES } from "../utils/bookableTables";
+import { fetchVenueSettings } from "../services/supabaseData";
 import PublicLayout from "../components/landing/PublicLayout";
 import "./BookingPublicPage.css";
 
@@ -11,7 +13,10 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "";
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
 const APP_URL = import.meta.env.VITE_APP_URL || window.location.origin;
 
-const TABLE_COUNT = 12;
+// How many tables each game has (the database enforces the same numbers).
+function tableCountFor(gameType) {
+  return BOOKABLE_TABLES.filter((t) => t.gameType === gameType).length;
+}
 
 function buildGameTypes(rates) {
   return [
@@ -81,34 +86,38 @@ function buildDateOptions() {
   return options;
 }
 
-async function checkAvailability(bookingAtISO, hoursCount) {
-  if (!isSupabaseConfigured || !supabase) return TABLE_COUNT;
+async function checkAvailability(bookingAtISO, hoursCount, gameType) {
+  const tableCount = tableCountFor(gameType);
+  if (!isSupabaseConfigured || !supabase) return tableCount;
   const start = new Date(bookingAtISO);
   const end = new Date(start.getTime() + hoursCount * 3600 * 1000);
 
-  const { data, error } = await supabase
-    .from("bookings")
-    .select("tables_count, booking_at, hours_count")
-    .eq("is_done", false)
-    .in("payment_status", ["paid", "pending"]);
+  // Bookings aren't readable by the public (RLS). This RPC applies the same
+  // per-table rule the database uses when it reserves the booking.
+  const { data: available, error } = await supabase.rpc("get_available_tables", {
+    p_start: start.toISOString(),
+    p_end: end.toISOString(),
+    p_game_type: gameType,
+  });
 
-  if (error || !data) return TABLE_COUNT;
-
-  const booked = data.reduce((sum, b) => {
-    if (!b.booking_at || !b.hours_count) return sum;
-    const bStart = new Date(b.booking_at);
-    const bEnd = new Date(bStart.getTime() + b.hours_count * 3600 * 1000);
-    if (bStart < end && bEnd > start) return sum + (b.tables_count || 0);
-    return sum;
-  }, 0);
-
-  return Math.max(0, TABLE_COUNT - booked);
+  if (error || available == null) return tableCount;
+  return available;
 }
 
 export default function BookingPublicPage() {
   const { t } = useTranslation();
-  const venueHours = loadVenueHours();
-  const rates = useMemo(() => loadGameRates(), []);
+  // Rates and opening hours come from the database. Display only — the price
+  // actually charged is computed server-side from the same row.
+  const [rates, setRates] = useState(DEFAULT_GAME_RATES);
+  const [venueHours, setVenueHours] = useState(DEFAULT_VENUE_HOURS);
+  useEffect(() => {
+    fetchVenueSettings()
+      .then((settings) => {
+        setRates(settings.gameRates);
+        setVenueHours(settings.venueHours);
+      })
+      .catch((err) => console.error("Failed to load venue settings:", err));
+  }, []);
   const GAME_TYPES = useMemo(() => buildGameTypes(rates), [rates]);
   const dateOptions = buildDateOptions();
 
@@ -117,7 +126,7 @@ export default function BookingPublicPage() {
   const [duration, setDuration] = useState(1);
   const [tablesCount, setTablesCount] = useState(1);
   const [gameType, setGameType] = useState("pingpong");
-  const [availableTables, setAvailableTables] = useState(TABLE_COUNT);
+  const [availableTables, setAvailableTables] = useState(() => tableCountFor("pingpong"));
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
 
   const [name, setName] = useState("");
@@ -141,7 +150,8 @@ export default function BookingPublicPage() {
   useEffect(() => {
     const firstAvailable = timeSlots.find((s) => !s.disabled);
     setSelectedTime(firstAvailable?.value || "");
-  }, [selectedDate]);
+    // Re-pick when the opening hours arrive from the database too.
+  }, [selectedDate, venueHours]);
 
   useEffect(() => {
     if (availableDurations.length > 0 && !availableDurations.find((d) => d.value === duration)) {
@@ -154,12 +164,12 @@ export default function BookingPublicPage() {
     // Pin to Tbilisi timezone (UTC+4) so the server interprets correctly
     const bookingAt = `${selectedDate}T${selectedTime}:00+04:00`;
     setAvailabilityLoading(true);
-    checkAvailability(bookingAt, duration).then((n) => {
+    checkAvailability(bookingAt, duration, gameType).then((n) => {
       setAvailableTables(n);
       if (tablesCount > n) setTablesCount(Math.max(1, n));
       setAvailabilityLoading(false);
     });
-  }, [selectedDate, selectedTime, duration]);
+  }, [selectedDate, selectedTime, duration, gameType]);
 
   const selectedGame = GAME_TYPES.find((g) => g.value === gameType) || GAME_TYPES[0];
   const totalGel = tablesCount * duration * selectedGame.rate;
@@ -200,7 +210,6 @@ export default function BookingPublicPage() {
             hoursCount: Number(duration),
             bookingAt,
             gameType,
-            ratePerHour: selectedGame.rate,
             responseUrl: `${APP_URL}/book/success`,
             cancelUrl: `${APP_URL}/book/cancelled`,
           }),

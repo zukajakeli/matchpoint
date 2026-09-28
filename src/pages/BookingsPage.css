@@ -189,8 +189,52 @@
 
 .booking-form {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
+  align-items: start;
+}
+
+.booking-tables-picker {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.booking-tables-picker-label {
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--mp-navy, #14243e);
+}
+
+.booking-tables-picker-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.booking-table-chip {
+  font-family: inherit;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 2px solid var(--mp-gray-light, #e5e7eb);
+  background: #fff;
+  color: var(--mp-navy, #14243e);
+  cursor: pointer;
+  transition: background-color 0.1s ease, border-color 0.1s ease, color 0.1s ease;
+}
+
+.booking-table-chip:hover {
+  border-color: var(--mp-blue, #1c3fba);
+}
+
+.booking-table-chip.selected {
+  background: var(--mp-blue, #1c3fba);
+  border-color: var(--mp-blue, #1c3fba);
+  color: #fff;
 }
 
 .booking-form input {

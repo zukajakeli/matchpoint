@@ -2,15 +2,13 @@
 import React, { useEffect, useState } from "react";
 import { LOCAL_STORAGE_SALES_SETTINGS_KEY } from "../config";
 import { DEFAULT_GAME_RATES } from "../utils/gameRates";
-import {
-  DAY_NAMES,
-  DEFAULT_VENUE_HOURS,
-  LOCAL_STORAGE_VENUE_HOURS_KEY,
-  loadVenueHours,
-  saveVenueHours,
-} from "../utils/venueHours";
+import { DAY_NAMES, DEFAULT_VENUE_HOURS, loadVenueHours } from "../utils/venueHours";
+import { fetchVenueSettings, saveVenueSettings } from "../services/supabaseData";
 import "./SalesSettingsPage.css";
 
+// Settings live in the venue_settings table: every staff device and the
+// public booking page read them from there, and online booking prices are
+// computed from them in the database.
 function SalesSettingsPage() {
   // ── Sale-price settings ──────────────────────────────────────────────────
   const [saleFromHour, setSaleFromHour] = useState(12);
@@ -22,59 +20,92 @@ function SalesSettingsPage() {
   const [gameRates, setGameRates] = useState({ ...DEFAULT_GAME_RATES });
   const [ratesSaved, setRatesSaved] = useState(false);
 
+  // ── Venue opening-hours settings ─────────────────────────────────────────
+  const [venueHours, setVenueHours] = useState(() => loadVenueHours());
+  const [hoursSaved, setHoursSaved] = useState(false);
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadedFromThisDevice, setLoadedFromThisDevice] = useState(false);
+  const [saveError, setSaveError] = useState("");
+
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(LOCAL_STORAGE_SALES_SETTINGS_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (typeof parsed.saleFromHour === "number") setSaleFromHour(parsed.saleFromHour);
-        if (typeof parsed.saleToHour === "number") setSaleToHour(parsed.saleToHour);
-        if (typeof parsed.saleHourlyRate === "number") setSaleHourlyRate(parsed.saleHourlyRate);
-        if (parsed.gameRates) setGameRates((prev) => ({ ...prev, ...parsed.gameRates }));
-      }
-    } catch (e) {
-      console.error("Failed to load sales settings:", e);
-    }
+    let cancelled = false;
+    fetchVenueSettings()
+      .then((settings) => {
+        if (cancelled) return;
+        if (settings.updatedAt) {
+          setSaleFromHour(settings.saleWindow.fromHour);
+          setSaleToHour(settings.saleWindow.toHour);
+          setSaleHourlyRate(settings.saleWindow.hourlyRate);
+          setGameRates(settings.gameRates);
+          setVenueHours(settings.venueHours);
+          return;
+        }
+        // Never saved to the database yet: start from this browser's old
+        // local settings so the first save carries them over.
+        try {
+          const raw = localStorage.getItem(LOCAL_STORAGE_SALES_SETTINGS_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (typeof parsed.saleFromHour === "number") setSaleFromHour(parsed.saleFromHour);
+            if (typeof parsed.saleToHour === "number") setSaleToHour(parsed.saleToHour);
+            if (typeof parsed.saleHourlyRate === "number") setSaleHourlyRate(parsed.saleHourlyRate);
+            if (parsed.gameRates) setGameRates((prev) => ({ ...prev, ...parsed.gameRates }));
+          }
+        } catch (e) {
+          console.error("Failed to read local sales settings:", e);
+        }
+        setLoadedFromThisDevice(true);
+      })
+      .catch((e) => console.error("Failed to load venue settings:", e))
+      .finally(() => !cancelled && setIsLoading(false));
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  // Save all settings together (sale window + game rates share the same key)
-  const saveAll = (overrides = {}) => {
-    const existing = (() => {
-      try {
-        const raw = localStorage.getItem(LOCAL_STORAGE_SALES_SETTINGS_KEY);
-        return raw ? JSON.parse(raw) : {};
-      } catch { return {}; }
-    })();
-    const payload = {
-      ...existing,
-      saleFromHour: Number(saleFromHour),
-      saleToHour: Number(saleToHour),
-      saleHourlyRate: Number(saleHourlyRate),
-      gameRates: { ...gameRates },
-      ...overrides,
-    };
-    localStorage.setItem(LOCAL_STORAGE_SALES_SETTINGS_KEY, JSON.stringify(payload));
+  // Everything is saved together as one venue_settings row.
+  const saveAll = async (overrides = {}) => {
+    setSaveError("");
+    const numericRates = Object.fromEntries(
+      Object.entries(gameRates).map(([key, value]) => [key, Number(value)])
+    );
+    try {
+      await saveVenueSettings({
+        gameRates: numericRates,
+        venueHours,
+        saleWindow: {
+          fromHour: Number(saleFromHour),
+          toHour: Number(saleToHour),
+          hourlyRate: Number(saleHourlyRate),
+        },
+        ...overrides,
+      });
+      setLoadedFromThisDevice(false);
+      return true;
+    } catch (e) {
+      console.error("Failed to save venue settings:", e);
+      setSaveError("Couldn't save settings. Check your connection and try again.");
+      return false;
+    }
   };
 
-  const handleSaleSave = () => {
-    saveAll();
-    setSaleSaved(true);
-    setTimeout(() => setSaleSaved(false), 1500);
+  const flash = (setter) => {
+    setter(true);
+    setTimeout(() => setter(false), 1500);
   };
 
-  const handleRatesSave = () => {
-    saveAll();
-    setRatesSaved(true);
-    setTimeout(() => setRatesSaved(false), 1500);
+  const handleSaleSave = async () => {
+    if (await saveAll()) flash(setSaleSaved);
+  };
+
+  const handleRatesSave = async () => {
+    if (await saveAll()) flash(setRatesSaved);
   };
 
   const handleRateChange = (key, value) => {
     setGameRates((prev) => ({ ...prev, [key]: value }));
   };
-
-  // ── Venue opening-hours settings ─────────────────────────────────────────
-  const [venueHours, setVenueHours] = useState(() => loadVenueHours());
-  const [hoursSaved, setHoursSaved] = useState(false);
 
   const handleHoursChange = (dayIndex, field, value) => {
     setVenueHours((prev) => ({
@@ -83,22 +114,26 @@ function SalesSettingsPage() {
     }));
   };
 
-  const handleHoursSave = () => {
-    saveVenueHours(venueHours);
-    setHoursSaved(true);
-    setTimeout(() => setHoursSaved(false), 1500);
+  const handleHoursSave = async () => {
+    if (await saveAll()) flash(setHoursSaved);
   };
 
-  const handleHoursReset = () => {
+  const handleHoursReset = async () => {
     setVenueHours({ ...DEFAULT_VENUE_HOURS });
-    saveVenueHours(DEFAULT_VENUE_HOURS);
-    setHoursSaved(true);
-    setTimeout(() => setHoursSaved(false), 1500);
+    if (await saveAll({ venueHours: { ...DEFAULT_VENUE_HOURS } })) flash(setHoursSaved);
   };
 
   return (
     <div className="sales-settings">
       <h2>Settings</h2>
+      {isLoading && <p className="help-text">Loading settings…</p>}
+      {loadedFromThisDevice && (
+        <p className="help-text">
+          These values come from this browser and haven't been saved to the database yet.
+          Press any Save button to publish them to every device and the booking page.
+        </p>
+      )}
+      {saveError && <p className="help-text" style={{ color: "#dc2626" }}>{saveError}</p>}
 
       {/* ── Sale-price card ── */}
       <h3 className="settings-section-title">Sale Price Window</h3>
@@ -190,7 +225,7 @@ function SalesSettingsPage() {
       <div className="settings-card">
         <p className="help-text" style={{ marginTop: 0, marginBottom: 16 }}>
           Set the opening and closing hour for each day. Use 24 for midnight (last slot 23:45).
-          Changes take effect immediately on the public booking page.
+          Changes take effect immediately on the public booking page, and online bookings outside these hours are refused.
         </p>
         <div className="venue-hours-grid">
           {DAY_NAMES.map((name, i) => (

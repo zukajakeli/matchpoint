@@ -6,6 +6,8 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import SalesSettingsPage from "./pages/SalesSettingsPage";
 import MenuAdminPage from "./pages/MenuAdminPage";
 import BookingsPage from "./pages/BookingsPage";
+import TableViewPage from "./pages/TableViewPage";
+import ClubPage from "./pages/club/ClubPage";
 import BookingPublicPage from "./pages/BookingPublicPage";
 import BookingSuccessPage from "./pages/BookingSuccessPage";
 import BookingCancelledPage from "./pages/BookingCancelledPage";
@@ -22,7 +24,7 @@ import useTables from "./hooks/useTables";
 import useBookingNotifications from "./hooks/useBookingNotifications";
 import useActiveBookingsCount from "./hooks/useActiveBookingsCount";
 import useUpcomingBookings from "./hooks/useUpcomingBookings";
-import { markBookingAsDone } from "./services/supabaseData";
+import { markBookingAsDone, syncVenueSettingsCache } from "./services/supabaseData";
 import { playTableEndSound } from "./utils/utils";
 import "./App.css";
 import "./components/BookingNotifications.css";
@@ -31,6 +33,7 @@ import { HOURLY_RATE, LOCAL_STORAGE_TABLES_KEY, LOCAL_STORAGE_HISTORY_KEY } from
 // Public pages (lazy loaded)
 const LandingPage = React.lazy(() => import("./pages/public/LandingPage"));
 const ContactPage = React.lazy(() => import("./pages/public/ContactPage"));
+const AccountPage = React.lazy(() => import("./pages/public/AccountPage"));
 const ProductDetailPage = React.lazy(() => import("./pages/public/ProductDetailPage"));
 const BlogListPage = React.lazy(() => import("./pages/public/BlogListPage"));
 const BlogPostPage = React.lazy(() => import("./pages/public/BlogPostPage"));
@@ -60,9 +63,17 @@ function StaffPortal({ role = "superadmin" }) {
     handleStopTimer,
     handlePayAndClear,
     handleTransferTimer,
+    handleExtendTimer,
+    handleAttachMember,
   } = useTables();
 
   const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
+
+  // Rates, opening hours and sale window come from the database; refresh
+  // this device's copy that the billing helpers read.
+  useEffect(() => {
+    syncVenueSettingsCache();
+  }, []);
 
   // Tick every second to update running timers
   useEffect(() => {
@@ -154,6 +165,8 @@ function StaffPortal({ role = "superadmin" }) {
               <span className="booking-count-badge">{activeBookingsCount}</span>
             )}
           </Link>
+          <Link className="nav-link" to={`${basePath}/table-view`}>Table View</Link>
+          <Link className="nav-link" to={`${basePath}/club`}>Club</Link>
           {isSuperadmin && <Link className="nav-link" to={`${basePath}/products`}>Products</Link>}
           {isSuperadmin && <Link className="nav-link" to={`${basePath}/blog`}>Blog</Link>}
           {isSuperadmin && <Link className="nav-link" to={`${basePath}/events`}>Events</Link>}
@@ -162,7 +175,7 @@ function StaffPortal({ role = "superadmin" }) {
           <button onClick={toggleSidebar} className="sidebar-toggle-btn">
             {isSidebarOpen ? "Close Bar" : "Open Bar"}
           </button>
-          <AdminLogoutButton role={role} />
+          <AdminLogoutButton />
         </div>
       </header>
 
@@ -180,6 +193,8 @@ function StaffPortal({ role = "superadmin" }) {
                 handlePayAndClear={handlePayAndClear}
                 handleToggleAvailability={handleToggleAvailability}
                 handleTransferTimer={handleTransferTimer}
+                handleExtendTimer={handleExtendTimer}
+                handleAttachMember={handleAttachMember}
                 upcomingBookings={upcomingBookings}
                 isSidebarOpen={isSidebarOpen}
                 cart={cart}
@@ -204,6 +219,8 @@ function StaffPortal({ role = "superadmin" }) {
           />
           <Route path={`${basePath}/menu`} element={<MenuAdminPage />} />
           <Route path={`${basePath}/bookings`} element={<BookingsPage />} />
+          <Route path={`${basePath}/table-view`} element={<TableViewPage tables={tables} />} />
+          <Route path={`${basePath}/club/*`} element={<ClubPage basePath={basePath} isSuperadmin={isSuperadmin} />} />
           {isSuperadmin && <Route path={`${basePath}/sales`} element={<SalesSettingsPage />} />}
           {isSuperadmin && <Route path={`${basePath}/products`} element={<ProductsAdminPage />} />}
           {isSuperadmin && <Route path={`${basePath}/blog`} element={<BlogAdminPage />} />}
@@ -273,6 +290,9 @@ function AppContent() {
           {/* Events */}
           <Route path="/events" element={<EventsListPage />} />
           <Route path="/events/:id" element={<EventDetailPage />} />
+
+          {/* Club member account */}
+          <Route path="/account" element={<AccountPage />} />
 
           {/* Contact */}
           <Route path="/contact" element={<ContactPage />} />

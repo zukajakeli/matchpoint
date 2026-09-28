@@ -3,6 +3,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import "./StartModal.css";
 import StartModalContentFields from "./start-modal/StartModalContentFields";
 import { loadGameRates } from "../utils/gameRates";
+import MemberPicker from "./members/MemberPicker";
 
 // Check if starting this timer would overlap with any upcoming paid booking.
 // Returns an array of conflicting bookings (empty = no conflict).
@@ -55,6 +56,9 @@ const StartModal = ({ table, isOpen, onClose, onStart, upcomingBookings }) => {
   const [validationError, setValidationError] = useState("");
   const [overrideWarning, setOverrideWarning] = useState(false);
   const [linkedBookingId, setLinkedBookingId] = useState("");
+  // Club member for this session. memberTouched = staff changed it here.
+  const [member, setMember] = useState(null);
+  const [memberTouched, setMemberTouched] = useState(false);
 
   // Bookings that match this table's game type (for linking)
   const matchingBookings = useMemo(() => {
@@ -96,6 +100,12 @@ const StartModal = ({ table, isOpen, onClose, onStart, upcomingBookings }) => {
     setValidationError("");
     setOverrideWarning(false);
     setLinkedBookingId("");
+    setMember(
+      table.memberId
+        ? { id: table.memberId, first_name: table.memberName || "Member", last_name: "", status: "active" }
+        : null
+    );
+    setMemberTouched(false);
   }, [table, isOpen, isCustomTimer]);
 
   if (!isOpen) return null;
@@ -138,6 +148,7 @@ const StartModal = ({ table, isOpen, onClose, onStart, upcomingBookings }) => {
         fitPass: isFoosOrHockey || isPlayStation || isCustomTimer ? false : fitPass,
         extraEquipment: (isPingPong || isPlayStation) ? extraEquipment : false,
         ...customOptions,
+        ...(memberTouched ? { member } : {}),
       },
       linkedBookingId || null
     );
@@ -148,6 +159,17 @@ const StartModal = ({ table, isOpen, onClose, onStart, upcomingBookings }) => {
     <div className="modal-overlay">
       <div className="modal-content">
         <h4>Start Timer for {table.name}</h4>
+
+        <div className="start-modal-member">
+          <label className="booking-link-label">Club member</label>
+          <MemberPicker
+            selected={member}
+            onSelect={(next) => {
+              setMember(next);
+              setMemberTouched(true);
+            }}
+          />
+        </div>
 
         {/* Link to existing booking */}
         {matchingBookings.length > 0 && (

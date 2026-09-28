@@ -86,6 +86,8 @@ export default function HomeDashboard({
   handlePayAndClear,
   handleToggleAvailability,
   handleTransferTimer,
+  handleExtendTimer,
+  handleAttachMember,
   upcomingBookings,
   isSidebarOpen,
   cart,
@@ -115,6 +117,8 @@ export default function HomeDashboard({
             onPayAndClear={handlePayAndClear}
             handleToggleAvailability={handleToggleAvailability}
             onTransferTimer={handleTransferTimer}
+            onExtend={handleExtendTimer}
+            onAttachMember={handleAttachMember}
             assignedBooking={tableBookingMap.get(table.id) || null}
           />
         ))}

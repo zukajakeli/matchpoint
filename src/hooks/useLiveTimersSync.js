@@ -18,6 +18,9 @@ const LIVE_SYNC_FIELDS = [
   "fitPass",
   "gameType",
   "hourlyRate",
+  "memberId",
+  "memberSessionId",
+  "memberName",
   "syncRevision",
 ];
 
@@ -74,13 +77,22 @@ export default function useLiveTimersSync(tables, setTables) {
             acc[table.id] = Number(table.syncRevision || 0);
             return acc;
           }, {});
-          lastSentTablesRef.current = remoteTables;
-          setTables((prevTables) =>
-            prevTables.map((table) => {
+          setTables((prevTables) => {
+            const localById = new Map(prevTables.map((t) => [t.id, t]));
+            const merged = prevTables.map((table) => {
               const remote = remoteTables.find((rt) => rt.id === table.id);
               return mergeRemoteTable(table, remote);
-            })
-          );
+            });
+            // Defensive: pull in any remote rows that don't have a matching local entry
+            // (e.g. localStorage was missing ids that exist in Supabase).
+            remoteTables.forEach((remote) => {
+              if (!localById.has(remote.id)) {
+                merged.push(mergeRemoteTable(remote, remote));
+              }
+            });
+            lastSentTablesRef.current = merged;
+            return merged;
+          });
         } else {
           shouldSeedFromLocal = true;
           const currentMaxRevision = Math.max(

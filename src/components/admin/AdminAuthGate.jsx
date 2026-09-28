@@ -1,67 +1,97 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { supabase, isSupabaseConfigured } from "../../services/supabaseClient";
 import "./AdminAuthGate.css";
 
-const SUPERADMIN_PASSWORD = import.meta.env.VITE_SUPERADMIN_PASSWORD || import.meta.env.VITE_ADMIN_PASSWORD || "";
-const STAFF_PASSWORD = import.meta.env.VITE_STAFF_PASSWORD || "";
-
 /**
- * AdminAuthGate — role-aware password gate.
+ * AdminAuthGate — Supabase Auth login + role check.
  *
  * Props:
- *   role: "superadmin" | "staff"
+ *   role: "superadmin" | "staff" — the portal being opened
  *   children: React node
  *
- * /superadmin uses VITE_SUPERADMIN_PASSWORD (falls back to VITE_ADMIN_PASSWORD)
- * /staff     uses VITE_STAFF_PASSWORD
+ * The user signs in with email + password (Supabase Auth). Their role
+ * comes from the staff_members table via the current_staff_role() RPC:
+ *   /superadmin needs role "superadmin"
+ *   /staff      accepts "staff" or "superadmin"
+ * Database access is enforced by RLS, so this gate is only the UI side.
  */
 
-function storageKey(role) {
-  return `matchpoint_auth_${role}`;
+function roleAllows(portalRole, userRole) {
+  if (portalRole === "superadmin") return userRole === "superadmin";
+  return userRole === "staff" || userRole === "superadmin";
 }
 
-function correctPassword(role) {
-  return role === "superadmin" ? SUPERADMIN_PASSWORD : STAFF_PASSWORD;
-}
-
-function isAuthenticated(role) {
-  try {
-    const pwd = correctPassword(role);
-    return sessionStorage.getItem(storageKey(role)) === pwd && pwd !== "";
-  } catch {
-    return false;
-  }
+async function fetchStaffRole() {
+  const { data, error } = await supabase.rpc("current_staff_role");
+  if (error) throw error;
+  return data || null;
 }
 
 export default function AdminAuthGate({ role = "superadmin", children }) {
-  const [authed, setAuthed] = useState(() => isAuthenticated(role));
-  const [input, setInput] = useState("");
-  const [error, setError] = useState(false);
+  // "checking" | "signed-out" | "no-access" | "authed"
+  const [status, setStatus] = useState("checking");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [shake, setShake] = useState(false);
 
-  const handleSubmit = useCallback(
-    (e) => {
-      e.preventDefault();
-      const pwd = correctPassword(role);
-      if (input === pwd && pwd !== "") {
-        sessionStorage.setItem(storageKey(role), input);
-        setAuthed(true);
-        setError(false);
-      } else {
-        setError(true);
-        setShake(true);
-        setTimeout(() => setShake(false), 500);
-        setInput("");
+  const resolveSession = useCallback(
+    async (session) => {
+      if (!session) {
+        setStatus("signed-out");
+        return;
+      }
+      try {
+        const userRole = await fetchStaffRole();
+        setStatus(roleAllows(role, userRole) ? "authed" : "no-access");
+      } catch (err) {
+        console.error("Failed to load staff role:", err);
+        setStatus("no-access");
       }
     },
-    [input, role]
+    [role]
   );
 
-  if (authed) return children;
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) {
+      setStatus("signed-out");
+      return undefined;
+    }
+    supabase.auth.getSession().then(({ data }) => resolveSession(data.session));
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      // Token refreshes don't change who is signed in; skip the extra round trip.
+      if (event === "TOKEN_REFRESHED") return;
+      // Defer: calling supabase inside this callback can deadlock the auth lock.
+      setTimeout(() => resolveSession(session), 0);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, [resolveSession]);
+
+  const handleSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
+      if (isSubmitting || !supabase) return;
+      setIsSubmitting(true);
+      setError("");
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      setIsSubmitting(false);
+      if (signInError) {
+        setError("Incorrect email or password.");
+        setShake(true);
+        setTimeout(() => setShake(false), 500);
+        setPassword("");
+      }
+    },
+    [email, password, isSubmitting]
+  );
+
+  if (status === "authed") return children;
 
   const title = role === "superadmin" ? "Superadmin Access" : "Staff Access";
-  const subtitle = role === "superadmin"
-    ? "Enter the superadmin password to continue."
-    : "Enter the staff password to continue.";
 
   return (
     <div className="admin-gate-overlay mp-dots-white mp-grain-strong">
@@ -70,38 +100,71 @@ export default function AdminAuthGate({ role = "superadmin", children }) {
           <img src="/matchpoint-logo.png" alt="MatchPoint" />
         </div>
         <h2>{title}</h2>
-        <p>{subtitle}</p>
-        <form onSubmit={handleSubmit} className="admin-gate-form">
-          <input
-            type="password"
-            value={input}
-            onChange={(e) => {
-              setInput(e.target.value);
-              setError(false);
-            }}
-            placeholder="Password"
-            autoFocus
-            className={error ? "admin-gate-input error" : "admin-gate-input"}
-          />
-          {error && <p className="admin-gate-error">Incorrect password. Try again.</p>}
-          <button type="submit" className="admin-gate-btn">
-            Enter
-          </button>
-        </form>
+
+        {status === "checking" && <p>Checking your session…</p>}
+
+        {status === "no-access" && (
+          <>
+            <p>This account doesn't have access to the {role} portal.</p>
+            <button
+              type="button"
+              className="admin-gate-btn"
+              onClick={() => supabase.auth.signOut()}
+            >
+              Sign in with another account
+            </button>
+          </>
+        )}
+
+        {status === "signed-out" && (
+          <>
+            <p>Sign in with your staff account to continue.</p>
+            {!isSupabaseConfigured && (
+              <p className="admin-gate-error">Supabase is not configured.</p>
+            )}
+            <form onSubmit={handleSubmit} className="admin-gate-form">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError("");
+                }}
+                placeholder="Email"
+                autoComplete="username"
+                autoFocus
+                required
+                className={error ? "admin-gate-input error" : "admin-gate-input"}
+              />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError("");
+                }}
+                placeholder="Password"
+                autoComplete="current-password"
+                required
+                className={error ? "admin-gate-input error" : "admin-gate-input"}
+              />
+              {error && <p className="admin-gate-error">{error}</p>}
+              <button type="submit" className="admin-gate-btn" disabled={isSubmitting}>
+                {isSubmitting ? "Signing in…" : "Sign in"}
+              </button>
+            </form>
+          </>
+        )}
       </div>
     </div>
   );
 }
 
-export function AdminLogoutButton({ role = "superadmin" }) {
+export function AdminLogoutButton() {
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const handleLogout = () => {
-    try {
-      sessionStorage.removeItem(storageKey(role));
-    } catch {
-      // ignore
-    }
+  const handleLogout = async () => {
+    await supabase?.auth.signOut();
     window.location.reload();
   };
 

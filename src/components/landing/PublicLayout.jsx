@@ -16,6 +16,7 @@ export default function PublicLayout({ children }) {
     { to: "/events", label: t("nav_events") },
     { to: "/blog", label: t("nav_blog") },
     { to: "/contact", label: t("nav_contact") },
+    { to: "/account", label: t("nav_account") },
   ];
 
   return (

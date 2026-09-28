@@ -429,3 +429,24 @@
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
 }
+
+/* Club member playing on this table */
+.table-member-chip {
+  display: inline-block;
+  margin: -4px auto 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--mp-lime, #d5f296);
+  color: var(--mp-navy, #14243e);
+  font-size: 0.78rem;
+  font-weight: 700;
+  max-width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.controls .extend-btn,
+.controls .member-btn {
+  flex-grow: 0;
+}

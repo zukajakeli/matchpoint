@@ -17,6 +17,9 @@ function toLiveTimerRow(table) {
     fit_pass: Boolean(table.fitPass),
     game_type: table.gameType || "pingpong",
     hourly_rate: typeof table.hourlyRate === "number" ? table.hourlyRate : null,
+    member_id: table.memberId ?? null,
+    member_session_id: table.memberSessionId ?? null,
+    member_name: table.memberName ?? null,
     sync_revision: Number(table.syncRevision || 0),
   };
 }
@@ -41,6 +44,9 @@ function fromLiveTimerRow(row) {
         : row.hourly_rate
         ? Number(row.hourly_rate)
         : null,
+    memberId: row.member_id ?? null,
+    memberSessionId: row.member_session_id ?? null,
+    memberName: row.member_name ?? null,
     syncRevision: Number(row.sync_revision || 0),
   };
 }
@@ -50,7 +56,7 @@ export async function fetchLiveTimers() {
   const { data, error } = await supabase
     .from("live_timers")
     .select(
-      "table_id, name, is_available, timer_start_time, elapsed_time_in_seconds, is_running, timer_mode, initial_countdown_seconds, session_start_time, session_end_time, fit_pass, game_type, hourly_rate, sync_revision"
+      "table_id, name, is_available, timer_start_time, elapsed_time_in_seconds, is_running, timer_mode, initial_countdown_seconds, session_start_time, session_end_time, fit_pass, game_type, hourly_rate, member_id, member_session_id, member_name, sync_revision"
     )
     .order("table_id", { ascending: true });
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { tableLabel } from "../../utils/bookableTables";
 
 const GAME_LABELS = {
   pingpong: "Ping-Pong",
@@ -83,7 +84,12 @@ export default function BookingList({ bookings, isLoading, onMarkDone, onDelete,
             </div>
           </div>
           <div className="booking-meta">
-            {booking.tables_count} table{booking.tables_count > 1 ? "s" : ""}
+            {booking.table_ids?.length > 0
+              ? [...booking.table_ids]
+                  .sort((a, b) => a - b)
+                  .map(tableLabel)
+                  .join(", ")
+              : `${booking.tables_count} table${booking.tables_count > 1 ? "s" : ""}`}
             {booking.hours_count ? ` · ${booking.hours_count}h` : ""}
             {booking.game_type && GAME_LABELS[booking.game_type]
               ? ` · ${GAME_LABELS[booking.game_type]}`
