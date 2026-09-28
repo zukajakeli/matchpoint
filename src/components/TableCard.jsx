@@ -6,13 +6,24 @@ import SwitchToggle from "./SwitchToggle";
 import { HOURLY_RATE, LOCAL_STORAGE_SALES_SETTINGS_KEY } from "../config";
 import { getTableCardViewModel, loadSalesSettings } from "../utils/tableCardView";
 import TableCardUnavailable from "./table-card/TableCardUnavailable";
+import AttachMemberModal from "./members/AttachMemberModal";
 
 function formatShortTime(isoString) {
   if (!isoString) return "";
   return new Date(isoString).toLocaleTimeString("en-GB", { timeZone: "Asia/Tbilisi", hour: "2-digit", minute: "2-digit" });
 }
 
-const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggleAvailability, onTransferTimer, assignedBooking }) => {
+const TableCard = ({
+  table,
+  onOpenStartModal,
+  onStop,
+  onPayAndClear,
+  handleToggleAvailability,
+  onTransferTimer,
+  onExtend,
+  onAttachMember,
+  assignedBooking,
+}) => {
   const {
     name,
     isAvailable,
@@ -33,6 +44,7 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
   } = getTableCardViewModel(table, HOURLY_RATE, sales);
 
   const [showStopPrompt, setShowStopPrompt] = useState(false);
+  const [showAttachMember, setShowAttachMember] = useState(false);
   const promptRef = useRef(null);
 
   // Close prompt on outside click
@@ -116,6 +128,11 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
       <h3>
         <div>{name || "Custom Timer"}</div>
       </h3>
+      {table.memberId && (
+        <div className="table-member-chip" title="Club member — session is recorded automatically">
+          👤 {table.memberName || "Club member"}
+        </div>
+      )}
       <div className="timer-mode-display">
         Mode:{" "}
         {timerMode === "countdown"
@@ -159,6 +176,24 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
             Stop
           </button>
         )}
+        {timerMode === "countdown" && initialCountdownSeconds > 0 && onExtend && (
+          <button
+            onClick={() => onExtend(table.id, 30)}
+            className="start-btn extend-btn"
+            title="Add 30 minutes to this session"
+          >
+            +30m
+          </button>
+        )}
+        {canPayAndClear && onAttachMember && (
+          <button
+            onClick={() => setShowAttachMember(true)}
+            className="start-btn member-btn"
+            title={table.memberId ? "Change or remove the club member" : "Attach a club member to this session"}
+          >
+            👤
+          </button>
+        )}
         <div className="pay-clear-wrapper" ref={promptRef}>
           <button
             onClick={handlePayClear}
@@ -183,6 +218,13 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
           )}
         </div>
       </div>
+      {showAttachMember && (
+        <AttachMemberModal
+          table={table}
+          onAttach={(member) => onAttachMember(table.id, member)}
+          onClose={() => setShowAttachMember(false)}
+        />
+      )}
     </div>
   );
 };

@@ -1,0 +1,226 @@
+/* Reception member lookup (Start modal, Attach member, Members page) */
+.member-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.member-picker-input,
+.member-register-grid input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border: 2px solid var(--mp-gray-light, #e5e7eb);
+  border-radius: 12px;
+  font-size: 1rem;
+  font-family: inherit;
+  background: #fff;
+  outline: none;
+}
+
+.member-picker-input:focus,
+.member-register-grid input:focus {
+  border-color: var(--mp-blue, #1c3fba);
+  box-shadow: 0 0 0 4px rgba(28, 63, 186, 0.1);
+}
+
+.member-picker-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.member-picker-result {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--mp-gray-light, #e5e7eb);
+  border-radius: 10px;
+  background: #fff;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.member-picker-result:hover:not(:disabled) {
+  border-color: var(--mp-blue, #1c3fba);
+  background: #f5f7ff;
+}
+
+.member-picker-result:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.member-picker-result-name {
+  font-weight: 700;
+  color: var(--mp-navy, #14243e);
+}
+
+.member-picker-result-meta {
+  font-size: 0.82rem;
+  color: var(--mp-gray, #6b7280);
+  white-space: nowrap;
+}
+
+.member-picker-empty {
+  font-size: 0.85rem;
+  color: var(--mp-gray, #6b7280);
+}
+
+.member-picker-error {
+  font-size: 0.85rem;
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.member-picker-register {
+  align-self: flex-start;
+  border: none;
+  background: none;
+  padding: 2px 0;
+  color: var(--mp-blue, #1c3fba);
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Selected member */
+.member-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--mp-lime, #d5f296);
+  color: var(--mp-navy, #14243e);
+}
+
+.member-card.inactive {
+  background: #fde68a;
+}
+
+.member-card-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.member-card-name {
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+.member-card-code {
+  margin-left: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  opacity: 0.6;
+}
+
+.member-card-meta {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.member-card-warning {
+  margin-top: 2px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #b45309;
+}
+
+.member-card-points {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+}
+
+.member-card-points strong {
+  font-size: 1.3rem;
+}
+
+.member-card-points span {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.member-card-clear {
+  border: 1.5px solid rgba(20, 36, 62, 0.25);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+/* Inline registration */
+.member-register {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 2px dashed var(--mp-blue, #1c3fba);
+  border-radius: 12px;
+  background: #f8faff;
+}
+
+.member-register-title {
+  font-weight: 800;
+  color: var(--mp-navy, #14243e);
+}
+
+.member-register-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.member-register-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.member-register-cancel,
+.member-register-save {
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.member-register-cancel {
+  border: 1.5px solid var(--mp-gray-light, #e5e7eb);
+  background: #fff;
+}
+
+.member-register-save {
+  border: none;
+  background: var(--mp-blue, #1c3fba);
+  color: #fff;
+}
+
+.member-register-save:disabled,
+.member-register-cancel:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+@media (max-width: 520px) {
+  .member-register-grid {
+    grid-template-columns: 1fr;
+  }
+}

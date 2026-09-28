@@ -59,7 +59,6 @@ Deno.serve(async (req) => {
       hoursCount,
       bookingAt,
       gameType,
-      ratePerHour,
       responseUrl,
       cancelUrl,
     } = await req.json();
@@ -115,15 +114,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // --- Determine rate (GEL/hr per table) ---
-    // Use client-sent rate (from admin-configurable settings) with sensible fallbacks
-    const defaultRate =
-      gameType === "foosball" || gameType === "airhockey" ? 12 : gameType === "playstation" ? 20 : 16;
-    const ratePerTablePerHour =
-      typeof ratePerHour === "number" && ratePerHour > 0 ? ratePerHour : defaultRate;
-    const amountGel = tablesCount * hoursCount * ratePerTablePerHour;
-    const amountTetri = Math.round(amountGel * 100);
-
     // --- Supabase client (service role to bypass RLS) ---
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -132,38 +122,50 @@ Deno.serve(async (req) => {
     // --- Generate a unique order ID for Flitt ---
     const flittOrderId = crypto.randomUUID();
 
-    // --- Atomic slot check + insert via RPC ---
-    const { data: bookingId, error: rpcError } = await supabase.rpc(
-      "create_online_booking",
-      {
-        p_customer_name: customerName,
-        p_customer_email: customerEmail,
-        p_customer_phone: customerPhone,
-        p_tables_count: Number(tablesCount),
-        p_hours_count: Number(hoursCount),
-        p_booking_at: bookingDate.toISOString(),
-        p_game_type: gameType || "pingpong",
-        p_flitt_order_id: flittOrderId,
-        p_amount_charged: amountGel,
-      }
-    );
+    // --- Atomic validation + pricing + table assignment + insert via RPC ---
+    // The price comes from venue_settings inside the database; anything
+    // price-like in the request body is ignored.
+    const { data: rpcRows, error: rpcError } = await supabase.rpc("create_online_booking", {
+      p_customer_name: customerName,
+      p_customer_email: customerEmail,
+      p_customer_phone: customerPhone,
+      p_tables_count: Number(tablesCount),
+      p_hours_count: Number(hoursCount),
+      p_booking_at: bookingDate.toISOString(),
+      p_game_type: gameType || "pingpong",
+      p_flitt_order_id: flittOrderId,
+    });
 
     if (rpcError) {
-      if (rpcError.message?.includes("SLOT_UNAVAILABLE")) {
-        return new Response(
-          JSON.stringify({ error: "No tables available for that time slot" }),
-          { status: 409, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
-        );
+      const message = rpcError.message ?? "";
+      const knownErrors: Record<string, [number, string]> = {
+        SLOT_UNAVAILABLE: [409, "No tables available for that time slot"],
+        OUTSIDE_OPENING_HOURS: [400, "That time is outside our opening hours"],
+        INVALID_DURATION: [400, "Duration must be between 1 and 3 hours, in half-hour steps"],
+        INVALID_TABLES_COUNT: [400, "tablesCount must be >= 1"],
+        INVALID_GAME_TYPE: [400, "Unknown game type"],
+      };
+      const known = Object.keys(knownErrors).find((code) => message.includes(code));
+      if (known) {
+        const [status, error] = knownErrors[known];
+        return new Response(JSON.stringify({ error }), {
+          status,
+          headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+        });
       }
       console.error("RPC error:", JSON.stringify(rpcError));
       return new Response(
-        JSON.stringify({ error: "Failed to reserve slot", detail: rpcError.message ?? rpcError }),
+        JSON.stringify({ error: "Failed to reserve slot", detail: message || rpcError }),
         {
           status: 500,
           headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
         }
       );
     }
+
+    const reservation = Array.isArray(rpcRows) ? rpcRows[0] : rpcRows;
+    const bookingId = reservation.booking_id;
+    const amountTetri = Math.round(Number(reservation.amount) * 100);
 
     // --- Build Flitt checkout request ---
     const merchantId = Number(Deno.env.get("FLITT_MERCHANT_ID")!);

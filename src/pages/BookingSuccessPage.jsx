@@ -40,55 +40,43 @@ export default function BookingSuccessPage() {
       return;
     }
 
-    const fetchBooking = async () => {
-      const { data, error } = await supabase
-        .from("bookings")
-        .select(
-          "id, customer_name, tables_count, hours_count, booking_at, game_type, payment_status, amount_charged, masked_card"
-        )
-        .eq("flitt_order_id", orderId)
-        .single();
+    // Bookings aren't readable by the public (RLS). The RPC returns this one
+    // booking's display fields, keyed by the random Flitt order id. Realtime
+    // can't reach anonymous visitors either, so poll until the Flitt callback
+    // has settled the payment.
+    const POLL_MS = 3000;
+    const MAX_POLLS = 100; // ~5 minutes
+    let polls = 0;
+    let timeoutId = null;
+    let cancelled = false;
 
-      if (error || !data) {
+    const fetchBooking = async () => {
+      const { data, error } = await supabase.rpc("get_booking_status", { p_order_id: orderId });
+      if (cancelled) return;
+      const row = Array.isArray(data) ? data[0] : null;
+
+      if (error || !row) {
         setStatus("notfound");
         return;
       }
 
-      setBooking(data);
-      setStatus(data.payment_status === "paid" ? "paid" : data.payment_status === "failed" ? "failed" : "pending");
+      setBooking(row);
+      const nextStatus =
+        row.payment_status === "paid" ? "paid" : row.payment_status === "failed" ? "failed" : "pending";
+      setStatus(nextStatus);
+
+      if (nextStatus === "paid") {
+        sessionStorage.removeItem("mp_flitt_order_id");
+      } else if (nextStatus === "pending" && ++polls < MAX_POLLS) {
+        timeoutId = setTimeout(fetchBooking, POLL_MS);
+      }
     };
 
     fetchBooking();
 
-    const channel = supabase
-      .channel(`booking-success-${orderId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "bookings",
-          filter: `flitt_order_id=eq.${orderId}`,
-        },
-        (payload) => {
-          const updated = payload.new;
-          setBooking((prev) => ({ ...prev, ...updated }));
-          setStatus(
-            updated.payment_status === "paid"
-              ? "paid"
-              : updated.payment_status === "failed"
-              ? "failed"
-              : "pending"
-          );
-          if (updated.payment_status === "paid") {
-            sessionStorage.removeItem("mp_flitt_order_id");
-          }
-        }
-      )
-      .subscribe();
-
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      clearTimeout(timeoutId);
     };
   }, []);
 

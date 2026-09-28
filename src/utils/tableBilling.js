@@ -98,6 +98,9 @@ export function getClearedTableState(table) {
     sessionStartTime: null,
     sessionEndTime: null,
     fitPass: false,
+    memberId: null,
+    memberName: null,
+    memberSessionId: null,
   };
 }
 

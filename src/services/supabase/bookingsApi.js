@@ -1,10 +1,24 @@
 import { supabase, isSupabaseConfigured } from "../supabaseClient";
 import { assertSupabase } from "./assertSupabase";
+import { gameTypeForTables } from "../../utils/bookableTables";
 
 function emitBookingsChanged() {
   if (typeof window !== "undefined" && typeof CustomEvent === "function") {
     window.dispatchEvent(new CustomEvent("bookings:changed"));
   }
+}
+
+function normalizeTableIds(rawIds) {
+  if (!Array.isArray(rawIds)) return [];
+  return rawIds
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value) && value > 0);
+}
+
+function normalizeHours(hoursCount) {
+  if (hoursCount === null || hoursCount === undefined || hoursCount === "") return null;
+  const hours = Number(hoursCount);
+  return Number.isFinite(hours) && hours > 0 ? hours : null;
 }
 
 function normalizeBooking(row) {
@@ -13,11 +27,12 @@ function normalizeBooking(row) {
     is_done: Boolean(row?.is_done),
     done_at: row?.done_at ?? null,
     booking_at: row?.booking_at ?? null,
+    table_ids: normalizeTableIds(row?.table_ids),
   };
 }
 
 const BOOKINGS_SELECT =
-  "id, customer_name, customer_email, customer_phone, tables_count, hours_count, booking_at, is_done, done_at, created_at, game_type, booking_source, payment_status, flitt_order_id, flitt_payment_id, amount_charged, masked_card";
+  "id, customer_name, customer_email, customer_phone, tables_count, hours_count, booking_at, table_ids, is_done, done_at, created_at, game_type, booking_source, payment_status, flitt_order_id, flitt_payment_id, amount_charged, masked_card";
 
 export async function fetchBookings() {
   assertSupabase();
@@ -52,17 +67,19 @@ export async function fetchUpcomingPaidBookings() {
   return (data || []).map(normalizeBooking);
 }
 
-export async function createBooking({ customerName, tablesCount, hoursCount, bookingAt }) {
+export async function createBooking({ customerName, tablesCount, hoursCount, bookingAt, tableIds }) {
   assertSupabase();
-  const normalizedHours =
-    hoursCount === null || hoursCount === undefined || hoursCount === ""
-      ? null
-      : Number(hoursCount);
+  const cleanedTableIds = normalizeTableIds(tableIds);
+  const fallbackTablesCount = Number(tablesCount);
   const payload = {
     customer_name: customerName,
-    tables_count: Number(tablesCount),
-    hours_count: Number.isFinite(normalizedHours) && normalizedHours > 0 ? normalizedHours : null,
+    tables_count:
+      cleanedTableIds.length ||
+      (Number.isFinite(fallbackTablesCount) && fallbackTablesCount > 0 ? fallbackTablesCount : 1),
+    hours_count: normalizeHours(hoursCount),
     booking_at: bookingAt || null,
+    table_ids: cleanedTableIds,
+    game_type: gameTypeForTables(cleanedTableIds),
     booking_source: "staff",
     payment_status: "none",
   };
@@ -73,21 +90,48 @@ export async function createBooking({ customerName, tablesCount, hoursCount, boo
     .select(BOOKINGS_SELECT)
     .single();
 
-  if (!error) {
-    emitBookingsChanged();
-    return normalizeBooking(data);
+  if (error) throw error;
+  emitBookingsChanged();
+  return normalizeBooking(data);
+}
+
+// Partial update: only the fields passed are written, so a drag-to-reschedule
+// (bookingAt + tableIds) leaves the name and duration untouched.
+export async function updateBooking(id, { customerName, hoursCount, bookingAt, tableIds }) {
+  assertSupabase();
+  const payload = {};
+  if (customerName !== undefined) payload.customer_name = customerName;
+  if (hoursCount !== undefined) payload.hours_count = normalizeHours(hoursCount);
+  if (bookingAt !== undefined) payload.booking_at = bookingAt || null;
+  if (tableIds !== undefined) {
+    const cleanedTableIds = normalizeTableIds(tableIds);
+    payload.table_ids = cleanedTableIds;
+    if (cleanedTableIds.length > 0) {
+      payload.tables_count = cleanedTableIds.length;
+      payload.game_type = gameTypeForTables(cleanedTableIds);
+    }
   }
 
-  // Fallback for old schema
-  const fallback = await supabase
+  const { data, error } = await supabase
     .from("bookings")
-    .insert({ customer_name: customerName, tables_count: Number(tablesCount), hours_count: normalizedHours, booking_at: bookingAt || null })
-    .select("id, customer_name, tables_count, hours_count, created_at")
+    .update(payload)
+    .eq("id", id)
+    .select(BOOKINGS_SELECT)
     .single();
 
-  if (fallback.error) throw fallback.error;
+  if (error) throw error;
   emitBookingsChanged();
-  return normalizeBooking(fallback.data);
+  return normalizeBooking(data);
+}
+
+// Let the database pick the best free tables (side by side when possible)
+// for a booking that has none yet. Returns the assigned table ids.
+export async function autoAssignBookingTables(id) {
+  assertSupabase();
+  const { data, error } = await supabase.rpc("auto_assign_booking_tables", { p_booking_id: id });
+  if (error) throw error;
+  emitBookingsChanged();
+  return normalizeTableIds(data);
 }
 
 export async function markBookingAsDone(id) {
@@ -158,7 +202,12 @@ export function subscribeToBookingsChanges(onChange) {
       "postgres_changes",
       { event: "*", schema: "public", table: "bookings" },
       (payload) => {
-        onChange(payload);
+        const { new: newRow, old: oldRow } = payload || {};
+        onChange({
+          ...payload,
+          new: newRow ? normalizeBooking(newRow) : newRow,
+          old: oldRow ? normalizeBooking(oldRow) : oldRow,
+        });
       }
     )
     .subscribe();

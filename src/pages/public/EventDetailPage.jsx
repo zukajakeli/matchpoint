@@ -29,14 +29,10 @@ export default function EventDetailPage() {
     if (!isSupabaseConfigured || !supabase || !id) return;
     Promise.all([
       supabase.from("events").select("*").eq("id", id).single(),
-      supabase
-        .from("event_registrations")
-        .select("id", { count: "exact", head: true })
-        .eq("event_id", id)
-        .in("payment_status", ["paid", "pending"]),
+      supabase.rpc("get_event_registration_count", { p_event_id: id }),
     ]).then(([eventRes, countRes]) => {
       if (!eventRes.error) setEvent(eventRes.data);
-      setRegCount(countRes.count || 0);
+      setRegCount(countRes.data || 0);
       setLoading(false);
     });
   }, [id]);
