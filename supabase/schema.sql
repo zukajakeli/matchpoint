@@ -104,6 +104,8 @@ alter table public.bookings add column if not exists flitt_payment_id text;
 alter table public.bookings add column if not exists amount_charged numeric(10, 2);
 alter table public.bookings add column if not exists masked_card text;
 alter table public.bookings add column if not exists table_ids integer[] not null default '{}';
+-- Set when the paid-booking confirmation email is sent (flitt-callback)
+alter table public.bookings add column if not exists confirmation_email_sent_at timestamptz null;
 
 -- Products / services shown on the public site
 create table if not exists public.products (

@@ -3,7 +3,54 @@
 // Verifies the SHA1 signature then updates the booking status.
 // Always returns HTTP 200 — Flitt retries on any non-2xx response.
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { buildBookingConfirmation, sendEmail, type PaidBooking } from "../_shared/bookingEmail.ts";
+
+// Emails the customer once their booking is paid. The confirmation_email_sent_at
+// stamp is claimed atomically first, so Flitt's repeated callbacks can never
+// send twice; if sending fails the claim is released and the error logged.
+async function sendBookingConfirmation(supabase: SupabaseClient, bookingId: string) {
+  const apiKey = Deno.env.get("RESEND_API_KEY");
+  if (!apiKey) {
+    console.warn("flitt-callback: RESEND_API_KEY not set — skipping confirmation email");
+    return;
+  }
+
+  const { data: booking, error } = await supabase
+    .from("bookings")
+    .update({ confirmation_email_sent_at: new Date().toISOString() })
+    .eq("id", bookingId)
+    .is("confirmation_email_sent_at", null)
+    .not("customer_email", "is", null)
+    .select(
+      "customer_name, customer_email, booking_at, hours_count, tables_count, table_ids, game_type, amount_charged, masked_card, flitt_order_id"
+    )
+    .maybeSingle();
+
+  if (error) {
+    console.error("flitt-callback: could not claim confirmation email:", error);
+    return;
+  }
+  if (!booking) return; // already sent, or no email address
+
+  const siteUrl = Deno.env.get("SITE_URL") || "https://www.matchpoint.ge";
+  const { subject, html, text } = buildBookingConfirmation(booking as PaidBooking, siteUrl);
+  try {
+    await sendEmail({
+      apiKey,
+      from: Deno.env.get("BOOKING_EMAIL_FROM") || "MatchPoint <no-reply@matchpoint.ge>",
+      to: booking.customer_email as string,
+      replyTo: Deno.env.get("BOOKING_EMAIL_REPLY_TO") || undefined,
+      subject,
+      html,
+      text,
+    });
+    console.log(`flitt-callback: confirmation email sent for booking ${bookingId}`);
+  } catch (err) {
+    console.error("flitt-callback: confirmation email failed:", err);
+    await supabase.from("bookings").update({ confirmation_email_sent_at: null }).eq("id", bookingId);
+  }
+}
 
 // Convert an ArrayBuffer to a lowercase hex string.
 function bufToHex(buf: ArrayBuffer): string {
@@ -117,6 +164,9 @@ Deno.serve(async (req) => {
     console.error("flitt-callback: Failed to update booking:", updateError);
   } else {
     console.log(`flitt-callback: booking ${existing.id} → ${newStatus}`);
+    if (newStatus === "paid") {
+      await sendBookingConfirmation(supabase, existing.id);
+    }
   }
 
   return new Response("OK", { status: 200 });
