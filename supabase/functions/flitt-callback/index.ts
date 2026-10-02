@@ -8,47 +8,70 @@ import { buildBookingConfirmation, sendEmail, type PaidBooking } from "../_share
 
 // Emails the customer once their booking is paid. The confirmation_email_sent_at
 // stamp is claimed atomically first, so Flitt's repeated callbacks can never
-// send twice; if sending fails the claim is released and the error logged.
-async function sendBookingConfirmation(supabase: SupabaseClient, bookingId: string) {
-  const apiKey = Deno.env.get("RESEND_API_KEY");
-  if (!apiKey) {
-    console.warn("flitt-callback: RESEND_API_KEY not set — skipping confirmation email");
-    return;
-  }
-
-  const { data: booking, error } = await supabase
+// send twice; if sending fails the claim is released. Whatever stops an email
+// is written to bookings.confirmation_email_error so it's visible in the DB.
+async function recordEmailError(supabase: SupabaseClient, bookingId: string, message: string) {
+  console.error(`flitt-callback: confirmation email not sent for ${bookingId}: ${message}`);
+  await supabase
     .from("bookings")
-    .update({ confirmation_email_sent_at: new Date().toISOString() })
-    .eq("id", bookingId)
-    .is("confirmation_email_sent_at", null)
-    .not("customer_email", "is", null)
-    .select(
-      "customer_name, customer_email, booking_at, hours_count, tables_count, table_ids, game_type, amount_charged, masked_card, flitt_order_id"
-    )
-    .maybeSingle();
+    .update({ confirmation_email_error: message.slice(0, 500) })
+    .eq("id", bookingId);
+}
 
-  if (error) {
-    console.error("flitt-callback: could not claim confirmation email:", error);
-    return;
-  }
-  if (!booking) return; // already sent, or no email address
-
-  const siteUrl = Deno.env.get("SITE_URL") || "https://www.matchpoint.ge";
-  const { subject, html, text } = buildBookingConfirmation(booking as PaidBooking, siteUrl);
+async function sendBookingConfirmation(supabase: SupabaseClient, bookingId: string) {
   try {
-    await sendEmail({
-      apiKey,
-      from: Deno.env.get("BOOKING_EMAIL_FROM") || "MatchPoint <no-reply@matchpoint.ge>",
-      to: booking.customer_email as string,
-      replyTo: Deno.env.get("BOOKING_EMAIL_REPLY_TO") || undefined,
-      subject,
-      html,
-      text,
-    });
+    const apiKey = Deno.env.get("RESEND_API_KEY");
+    if (!apiKey) {
+      await recordEmailError(supabase, bookingId, "RESEND_API_KEY is not set");
+      return;
+    }
+
+    const { data: booking, error } = await supabase
+      .from("bookings")
+      .update({ confirmation_email_sent_at: new Date().toISOString() })
+      .eq("id", bookingId)
+      .is("confirmation_email_sent_at", null)
+      .not("customer_email", "is", null)
+      .select(
+        "customer_name, customer_email, booking_at, hours_count, tables_count, table_ids, game_type, amount_charged, masked_card, flitt_order_id"
+      )
+      .maybeSingle();
+
+    if (error) {
+      await recordEmailError(supabase, bookingId, `claim failed: ${error.message || JSON.stringify(error)}`);
+      return;
+    }
+    if (!booking) {
+      console.log(`flitt-callback: no confirmation needed for ${bookingId} (already sent or no email)`);
+      return;
+    }
+
+    const siteUrl = Deno.env.get("SITE_URL") || "https://www.matchpoint.ge";
+    const { subject, html, text } = buildBookingConfirmation(booking as PaidBooking, siteUrl);
+    try {
+      await sendEmail({
+        apiKey,
+        from: Deno.env.get("BOOKING_EMAIL_FROM") || "MatchPoint <no-reply@matchpoint.ge>",
+        to: booking.customer_email as string,
+        replyTo: Deno.env.get("BOOKING_EMAIL_REPLY_TO") || undefined,
+        subject,
+        html,
+        text,
+      });
+    } catch (err) {
+      await supabase.from("bookings").update({ confirmation_email_sent_at: null }).eq("id", bookingId);
+      await recordEmailError(supabase, bookingId, `send failed: ${err instanceof Error ? err.message : String(err)}`);
+      return;
+    }
+    await supabase.from("bookings").update({ confirmation_email_error: null }).eq("id", bookingId);
     console.log(`flitt-callback: confirmation email sent for booking ${bookingId}`);
   } catch (err) {
-    console.error("flitt-callback: confirmation email failed:", err);
-    await supabase.from("bookings").update({ confirmation_email_sent_at: null }).eq("id", bookingId);
+    // Never let an email problem break the payment callback itself.
+    await recordEmailError(
+      supabase,
+      bookingId,
+      `unexpected: ${err instanceof Error ? `${err.message}\n${err.stack ?? ""}` : String(err)}`
+    ).catch(() => {});
   }
 }
 
