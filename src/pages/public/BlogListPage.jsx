@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { supabase, isSupabaseConfigured } from "../../services/supabaseClient";
 import { useTranslation } from "../../i18n/LanguageContext";
 import PublicLayout from "../../components/landing/PublicLayout";
+import ContentImage from "../../components/landing/ContentImage";
+import { pageSeo } from "../../seo/seo";
 import "./BlogListPage.css";
 
 export default function BlogListPage() {
@@ -14,7 +16,7 @@ export default function BlogListPage() {
     if (!isSupabaseConfigured || !supabase) { setLoading(false); return; }
     supabase
       .from("blog_posts")
-      .select("id, title, slug, excerpt, cover_image, published_at, author")
+      .select("id, title, slug, excerpt, published_at, author, updated_at")
       .eq("is_published", true)
       .order("published_at", { ascending: false })
       .then(({ data }) => {
@@ -26,7 +28,7 @@ export default function BlogListPage() {
   const dateLang = lang === "ka" ? "ka-GE" : "en-GB";
 
   return (
-    <PublicLayout>
+    <PublicLayout seo={pageSeo(t("blog_title"), t("blog_subtitle"), "/blog")}>
       <div className="mp-blog-list-page">
         <section className="mp-blog-list-hero mp-dots-white mp-grain">
           <h1>{t("blog_title")}</h1>
@@ -42,11 +44,7 @@ export default function BlogListPage() {
             <div className="mp-blog-list-grid">
               {posts.map((post) => (
                 <Link to={`/blog/${post.slug}`} key={post.id} className="mp-blog-list-card">
-                  {post.cover_image && (
-                    <div className="mp-blog-list-card-image">
-                      <img src={post.cover_image} alt={post.title} />
-                    </div>
-                  )}
+                  <ContentImage type="blog" row={post} alt={post.title} className="mp-blog-list-card-image" />
                   <div className="mp-blog-list-card-info">
                     <h2>{post.title}</h2>
                     {post.excerpt && <p>{post.excerpt}</p>}

@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { supabase, isSupabaseConfigured } from "../../services/supabaseClient";
 import { useTranslation } from "../../i18n/LanguageContext";
 import PublicLayout from "../../components/landing/PublicLayout";
+import { productSeo } from "../../seo/seo";
 import "./ProductDetailPage.css";
 
 export default function ProductDetailPage() {
@@ -36,7 +37,7 @@ export default function ProductDetailPage() {
 
   if (!product) {
     return (
-      <PublicLayout>
+      <PublicLayout seo={{ path: `/services/${id}`, noindex: true }}>
         <div className="mp-product-detail-page">
           <div className="mp-product-detail-empty">
             <h2>{t("services_not_found")}</h2>
@@ -48,7 +49,7 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <PublicLayout>
+    <PublicLayout seo={productSeo(product)}>
       <div className="mp-product-detail-page">
         <div className="mp-product-detail-hero">
           {product.image && (

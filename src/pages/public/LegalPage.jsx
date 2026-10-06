@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, Navigate } from "react-router-dom";
 import PublicLayout from "../../components/landing/PublicLayout";
+import { pageSeo } from "../../seo/seo";
 import CompanyDetails from "../../components/landing/CompanyDetails";
 import { useTranslation } from "../../i18n/LanguageContext";
 import { LEGAL_PAGES, LEGAL_SLUGS, LEGAL_UPDATED } from "../../legal/legalContent";
@@ -29,8 +30,7 @@ export default function LegalPage({ slug }) {
   );
 
   return (
-    <PublicLayout>
-      <title>{`${page.title} — MatchPoint`}</title>
+    <PublicLayout seo={pageSeo(page.title, page.intro, `/${slug}`)}>
       <div className="mp-legal-page">
         <nav className="mp-legal-nav" aria-label={t("legal_documents")}>
           {LEGAL_SLUGS.map((s) => (

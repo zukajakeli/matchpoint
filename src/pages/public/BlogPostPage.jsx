@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { supabase, isSupabaseConfigured } from "../../services/supabaseClient";
 import { useTranslation } from "../../i18n/LanguageContext";
 import PublicLayout from "../../components/landing/PublicLayout";
+import { blogPostSeo } from "../../seo/seo";
 import "./BlogPostPage.css";
 
 export default function BlogPostPage() {
@@ -39,7 +40,7 @@ export default function BlogPostPage() {
 
   if (!post) {
     return (
-      <PublicLayout>
+      <PublicLayout seo={{ path: `/blog/${slug}`, noindex: true }}>
         <div className="mp-blog-post-page">
           <div className="mp-blog-post-empty">
             <h2>Post not found</h2>
@@ -51,7 +52,7 @@ export default function BlogPostPage() {
   }
 
   return (
-    <PublicLayout>
+    <PublicLayout seo={blogPostSeo(post)}>
       <div className="mp-blog-post-page mp-grain">
         {post.cover_image && (
           <div className="mp-blog-post-cover">

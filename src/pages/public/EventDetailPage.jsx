@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { supabase, isSupabaseConfigured } from "../../services/supabaseClient";
 import { useTranslation } from "../../i18n/LanguageContext";
 import PublicLayout from "../../components/landing/PublicLayout";
+import { eventSeo } from "../../seo/seo";
 import TermsConsent from "../../components/landing/TermsConsent";
 import "./EventDetailPage.css";
 
@@ -104,7 +105,7 @@ export default function EventDetailPage() {
 
   if (!event) {
     return (
-      <PublicLayout>
+      <PublicLayout seo={{ path: `/events/${id}`, noindex: true }}>
         <div className="mp-event-detail-page">
           <div className="mp-event-detail-empty">
             <h2>Event not found</h2>
@@ -116,7 +117,7 @@ export default function EventDetailPage() {
   }
 
   return (
-    <PublicLayout>
+    <PublicLayout seo={eventSeo(event)}>
       <div className="mp-event-detail-page mp-grain">
         {event.image && (
           <div className="mp-event-detail-cover">

@@ -4,7 +4,7 @@ import "./BookingResultPage.css";
 
 export default function BookingCancelledPage() {
   return (
-    <PublicLayout>
+    <PublicLayout seo={{ path: "/book/cancelled", noindex: true }}>
       <div className="mp-result-page">
         <div className="mp-result-content">
           <div className="mp-result-card cancelled">

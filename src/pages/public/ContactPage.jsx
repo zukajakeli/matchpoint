@@ -1,6 +1,7 @@
 import React from "react";
 import { useTranslation } from "../../i18n/LanguageContext";
 import PublicLayout from "../../components/landing/PublicLayout";
+import { pageSeo } from "../../seo/seo";
 import CompanyDetails from "../../components/landing/CompanyDetails";
 import "./LegalPage.css";
 import "./ContactPage.css";
@@ -11,7 +12,7 @@ export default function ContactPage() {
   const { t } = useTranslation();
 
   return (
-    <PublicLayout>
+    <PublicLayout seo={pageSeo(t("contact_title"), t("contact_subtitle"), "/contact")}>
       <div className="mp-contact-page">
         <section className="mp-contact-hero mp-dots-white mp-grain">
           <h1>{t("contact_title")}</h1>

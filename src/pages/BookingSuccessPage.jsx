@@ -81,7 +81,7 @@ export default function BookingSuccessPage() {
   }, []);
 
   return (
-    <PublicLayout>
+    <PublicLayout seo={{ path: "/book/success", noindex: true }}>
       <div className="mp-result-page">
         <div className="mp-result-content">
           {status === "loading" && (

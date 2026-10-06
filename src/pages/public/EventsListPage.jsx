@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { supabase, isSupabaseConfigured } from "../../services/supabaseClient";
 import { useTranslation } from "../../i18n/LanguageContext";
 import PublicLayout from "../../components/landing/PublicLayout";
+import ContentImage from "../../components/landing/ContentImage";
+import { pageSeo } from "../../seo/seo";
 import "./EventsListPage.css";
 
 export default function EventsListPage() {
@@ -14,7 +16,7 @@ export default function EventsListPage() {
     if (!isSupabaseConfigured || !supabase) { setLoading(false); return; }
     supabase
       .from("events")
-      .select("*")
+      .select("id, title, description, event_date, entry_fee, max_participants, updated_at")
       .eq("is_active", true)
       .order("event_date", { ascending: true })
       .then(({ data }) => {
@@ -28,7 +30,7 @@ export default function EventsListPage() {
   const dateLang = lang === "ka" ? "ka-GE" : "en-GB";
 
   return (
-    <PublicLayout>
+    <PublicLayout seo={pageSeo(t("events_title"), t("events_subtitle"), "/events")}>
       <div className="mp-events-list-page">
         <section className="mp-events-list-hero mp-dots-white mp-grain">
           <h1>{t("events_title")}</h1>
@@ -73,11 +75,7 @@ export default function EventsListPage() {
 function EventCard({ event: ev, isPast, dateLang, t }) {
   return (
     <Link to={`/events/${ev.id}`} className={`mp-events-list-card ${isPast ? "past" : ""}`}>
-      {ev.image && (
-        <div className="mp-events-list-card-image">
-          <img src={ev.image} alt={ev.title} />
-        </div>
-      )}
+      <ContentImage type="event" row={ev} alt={ev.title} className="mp-events-list-card-image" />
       <div className="mp-events-list-card-info">
         <span className="mp-events-list-date">
           {new Date(ev.event_date).toLocaleDateString(dateLang, {

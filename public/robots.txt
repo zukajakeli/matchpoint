@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /staff
+Disallow: /superadmin
+Disallow: /account
+Disallow: /book/success
+Disallow: /book/cancelled
+Disallow: /api/
+
+Sitemap: https://www.matchpoint.ge/sitemap.xml

@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { supabase, isSupabaseConfigured } from "../../services/supabaseClient";
 import { useTranslation } from "../../i18n/LanguageContext";
 import PublicLayout from "../../components/landing/PublicLayout";
+import ContentImage from "../../components/landing/ContentImage";
+import { homeSeo } from "../../seo/seo";
 import "./LandingPage.css";
 
 const VENUE_NAME = import.meta.env.VITE_VENUE_NAME || "MatchPoint";
@@ -16,15 +18,15 @@ export default function LandingPage() {
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) return;
 
-    supabase.from("products").select("*").eq("is_active", true).order("display_order").then(({ data }) => {
+    supabase.from("products").select("id, title, subtitle, updated_at").eq("is_active", true).order("display_order").then(({ data }) => {
       setProducts(data || []);
     });
 
-    supabase.from("events").select("*").eq("is_active", true).order("event_date", { ascending: true }).limit(3).then(({ data }) => {
+    supabase.from("events").select("id, title, event_date, entry_fee, updated_at").eq("is_active", true).order("event_date", { ascending: true }).limit(3).then(({ data }) => {
       setEvents(data || []);
     });
 
-    supabase.from("blog_posts").select("id, title, slug, excerpt, cover_image, published_at").eq("is_published", true).order("published_at", { ascending: false }).limit(3).then(({ data }) => {
+    supabase.from("blog_posts").select("id, title, slug, excerpt, published_at, updated_at").eq("is_published", true).order("published_at", { ascending: false }).limit(3).then(({ data }) => {
       setBlogPosts(data || []);
     });
   }, []);
@@ -32,7 +34,7 @@ export default function LandingPage() {
   const dateLang = lang === "ka" ? "ka-GE" : "en-GB";
 
   return (
-    <PublicLayout>
+    <PublicLayout seo={homeSeo()}>
       {/* Hero Banner */}
       <section className="mp-hero mp-dots-white mp-grain-strong">
         <div className="mp-hero-content">
@@ -63,11 +65,7 @@ export default function LandingPage() {
           <div className="mp-products-grid">
             {products.map((p) => (
               <Link to={`/services/${p.id}`} key={p.id} className="mp-product-card">
-                {p.image && (
-                  <div className="mp-product-image">
-                    <img src={p.image} alt={p.title} />
-                  </div>
-                )}
+                <ContentImage type="product" row={p} alt={p.title} className="mp-product-image" />
                 <div className="mp-product-info">
                   <h3>{p.title}</h3>
                   {p.subtitle && <p className="mp-product-subtitle">{p.subtitle}</p>}
@@ -85,11 +83,7 @@ export default function LandingPage() {
           <div className="mp-events-grid">
             {events.map((ev) => (
               <Link to={`/events/${ev.id}`} key={ev.id} className="mp-event-card">
-                {ev.image && (
-                  <div className="mp-event-image">
-                    <img src={ev.image} alt={ev.title} />
-                  </div>
-                )}
+                <ContentImage type="event" row={ev} alt={ev.title} className="mp-event-image" />
                 <div className="mp-event-info">
                   <span className="mp-event-date">
                     {new Date(ev.event_date).toLocaleDateString(dateLang, { timeZone: "Asia/Tbilisi", weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
@@ -113,11 +107,7 @@ export default function LandingPage() {
           <div className="mp-blog-grid">
             {blogPosts.map((post) => (
               <Link to={`/blog/${post.slug}`} key={post.id} className="mp-blog-card">
-                {post.cover_image && (
-                  <div className="mp-blog-image">
-                    <img src={post.cover_image} alt={post.title} />
-                  </div>
-                )}
+                <ContentImage type="blog" row={post} alt={post.title} className="mp-blog-image" />
                 <div className="mp-blog-info">
                   <h3>{post.title}</h3>
                   {post.excerpt && <p>{post.excerpt}</p>}

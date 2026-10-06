@@ -4,11 +4,14 @@ import { useTranslation } from "../../i18n/LanguageContext";
 import LanguageSwitcher from "./LanguageSwitcher";
 import CompanyDetails from "./CompanyDetails";
 import { LEGAL_SLUGS } from "../../legal/legalContent";
+import Seo from "../Seo";
 import "./PublicLayout.css";
 
 const VENUE_NAME = import.meta.env.VITE_VENUE_NAME || "MatchPoint";
 
-export default function PublicLayout({ children }) {
+// seo: page metadata from src/seo/seo.js; defaults to the site title with
+// this URL as canonical.
+export default function PublicLayout({ children, seo }) {
   const location = useLocation();
   const { t } = useTranslation();
 
@@ -44,6 +47,7 @@ export default function PublicLayout({ children }) {
 
   return (
     <div className="mp-public-layout">
+      <Seo {...(seo || { path: location.pathname })} />
       <header className="mp-public-header">
         <div className="mp-header-inner">
           <Link to="/" className="mp-header-logo">

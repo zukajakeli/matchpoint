@@ -6,6 +6,7 @@ import { DEFAULT_GAME_RATES } from "../utils/gameRates";
 import { BOOKABLE_TABLES } from "../utils/bookableTables";
 import { fetchVenueSettings } from "../services/supabaseData";
 import PublicLayout from "../components/landing/PublicLayout";
+import { pageSeo } from "../seo/seo";
 import TermsConsent from "../components/landing/TermsConsent";
 import "./BookingPublicPage.css";
 
@@ -237,7 +238,7 @@ export default function BookingPublicPage() {
   );
 
   return (
-    <PublicLayout>
+    <PublicLayout seo={pageSeo(t("nav_book"), t("cta_subtitle"), "/book")}>
       <div className="mp-booking-page">
         <section className="mp-booking-hero mp-dots-white mp-grain">
           <h1>{t("booking_title")}</h1>

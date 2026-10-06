@@ -347,7 +347,7 @@ export default function AccountPage() {
   const signOut = () => supabase.auth.signOut();
 
   return (
-    <PublicLayout>
+    <PublicLayout seo={{ path: "/account", noindex: true }}>
       <div className="acc-page">
         <h1>{t("acc_title")}</h1>
         {state === "checking" && <p className="acc-muted">{t("acc_loading")}</p>}
