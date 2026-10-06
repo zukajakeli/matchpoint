@@ -8,6 +8,7 @@ import MenuAdminPage from "./pages/MenuAdminPage";
 import BookingsPage from "./pages/BookingsPage";
 import TableViewPage from "./pages/TableViewPage";
 import ClubPage from "./pages/club/ClubPage";
+import ScrollToTop from "./components/ScrollToTop";
 import BookingPublicPage from "./pages/BookingPublicPage";
 import BookingSuccessPage from "./pages/BookingSuccessPage";
 import BookingCancelledPage from "./pages/BookingCancelledPage";
@@ -315,6 +316,7 @@ function AppContent() {
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <AppContent />
     </Router>
   );
