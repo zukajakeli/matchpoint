@@ -3,6 +3,24 @@
 
 const translations = {
   en: {
+    // ── Legal ──
+    legal_terms: "Terms & Conditions",
+    legal_privacy: "Privacy Policy",
+    legal_refunds: "Refund & Cancellation",
+    legal_payments: "Payments & Security",
+    legal_documents: "Legal documents",
+    legal_updated: "Last updated",
+    legal_company: "Company details",
+    legal_company_name: "Legal name",
+    legal_id: "ID number",
+    consent_1: "I agree to the ",
+    consent_terms: "Terms & Conditions",
+    consent_2: " and the ",
+    consent_refunds: "Refund & Cancellation Policy",
+    consent_3: ", and I have read the ",
+    consent_privacy: "Privacy Policy",
+    consent_4: ".",
+
     // ── Club member account ──
     nav_account: "My Club",
     nav_menu: "Menu",
@@ -144,6 +162,24 @@ const translations = {
   },
 
   ka: {
+    // ── Legal ──
+    legal_terms: "წესები და პირობები",
+    legal_privacy: "კონფიდენციალურობის პოლიტიკა",
+    legal_refunds: "გაუქმება და თანხის დაბრუნება",
+    legal_payments: "გადახდა და უსაფრთხოება",
+    legal_documents: "იურიდიული დოკუმენტები",
+    legal_updated: "ბოლო განახლება",
+    legal_company: "კომპანიის რეკვიზიტები",
+    legal_company_name: "იურიდიული დასახელება",
+    legal_id: "საიდენტიფიკაციო კოდი",
+    consent_1: "ვეთანხმები ",
+    consent_terms: "წესებსა და პირობებს",
+    consent_2: " და ",
+    consent_refunds: "გაუქმებისა და თანხის დაბრუნების პოლიტიკას",
+    consent_3: ", ასევე გავეცანი ",
+    consent_privacy: "კონფიდენციალურობის პოლიტიკას",
+    consent_4: ".",
+
     // ── Club member account ──
     nav_account: "ჩემი კლუბი",
     nav_menu: "მენიუ",

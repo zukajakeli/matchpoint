@@ -1,6 +1,8 @@
 import React from "react";
 import { useTranslation } from "../../i18n/LanguageContext";
 import PublicLayout from "../../components/landing/PublicLayout";
+import CompanyDetails from "../../components/landing/CompanyDetails";
+import "./LegalPage.css";
 import "./ContactPage.css";
 
 const VENUE_NAME = import.meta.env.VITE_VENUE_NAME || "MatchPoint";
@@ -39,6 +41,8 @@ export default function ContactPage() {
               <p>{t("contact_hours_weekday")}<br />{t("contact_hours_weekend")}</p>
             </div>
           </div>
+
+          <CompanyDetails />
 
           <div className="mp-contact-map">
             <iframe

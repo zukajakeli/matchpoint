@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "../../i18n/LanguageContext";
 import LanguageSwitcher from "./LanguageSwitcher";
+import CompanyDetails from "./CompanyDetails";
+import { LEGAL_SLUGS } from "../../legal/legalContent";
 import "./PublicLayout.css";
 
 const VENUE_NAME = import.meta.env.VITE_VENUE_NAME || "MatchPoint";
@@ -152,6 +154,12 @@ export default function PublicLayout({ children }) {
               <span className="mp-pay-applepay">&nbsp;Pay</span>
             </span>
           </div>
+          <div className="mp-footer-legal">
+            {LEGAL_SLUGS.map((slug) => (
+              <Link key={slug} to={`/${slug}`}>{t(`legal_${slug}`)}</Link>
+            ))}
+          </div>
+          <CompanyDetails compact />
           <div className="mp-footer-copy">
             © {new Date().getFullYear()} {VENUE_NAME}. {t("footer_rights")}
           </div>

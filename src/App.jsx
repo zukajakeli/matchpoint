@@ -34,6 +34,7 @@ import { HOURLY_RATE, LOCAL_STORAGE_TABLES_KEY, LOCAL_STORAGE_HISTORY_KEY } from
 const LandingPage = React.lazy(() => import("./pages/public/LandingPage"));
 const ContactPage = React.lazy(() => import("./pages/public/ContactPage"));
 const AccountPage = React.lazy(() => import("./pages/public/AccountPage"));
+const LegalPage = React.lazy(() => import("./pages/public/LegalPage"));
 const ProductDetailPage = React.lazy(() => import("./pages/public/ProductDetailPage"));
 const BlogListPage = React.lazy(() => import("./pages/public/BlogListPage"));
 const BlogPostPage = React.lazy(() => import("./pages/public/BlogPostPage"));
@@ -290,6 +291,12 @@ function AppContent() {
           {/* Events */}
           <Route path="/events" element={<EventsListPage />} />
           <Route path="/events/:id" element={<EventDetailPage />} />
+
+          {/* Legal (required by the payment provider) */}
+          <Route path="/terms" element={<LegalPage slug="terms" />} />
+          <Route path="/privacy" element={<LegalPage slug="privacy" />} />
+          <Route path="/refunds" element={<LegalPage slug="refunds" />} />
+          <Route path="/payments" element={<LegalPage slug="payments" />} />
 
           {/* Club member account */}
           <Route path="/account" element={<AccountPage />} />

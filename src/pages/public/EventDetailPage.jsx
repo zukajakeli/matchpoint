@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { supabase, isSupabaseConfigured } from "../../services/supabaseClient";
 import { useTranslation } from "../../i18n/LanguageContext";
 import PublicLayout from "../../components/landing/PublicLayout";
+import TermsConsent from "../../components/landing/TermsConsent";
 import "./EventDetailPage.css";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "";
@@ -21,6 +22,7 @@ export default function EventDetailPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("online");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -208,6 +210,8 @@ export default function EventDetailPage() {
                       </div>
                     </div>
                   )}
+
+                  <TermsConsent checked={agreedToTerms} onChange={setAgreedToTerms} />
 
                   {submitError && <p className="mp-event-error">{submitError}</p>}
 

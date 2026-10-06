@@ -6,6 +6,7 @@ import { DEFAULT_GAME_RATES } from "../utils/gameRates";
 import { BOOKABLE_TABLES } from "../utils/bookableTables";
 import { fetchVenueSettings } from "../services/supabaseData";
 import PublicLayout from "../components/landing/PublicLayout";
+import TermsConsent from "../components/landing/TermsConsent";
 import "./BookingPublicPage.css";
 
 const VENUE_NAME = import.meta.env.VITE_VENUE_NAME || "MatchPoint";
@@ -132,6 +133,7 @@ export default function BookingPublicPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -426,6 +428,8 @@ export default function BookingPublicPage() {
                     required
                   />
                 </div>
+
+                <TermsConsent checked={agreedToTerms} onChange={setAgreedToTerms} />
 
                 {submitError && <p className="mp-booking-error">{submitError}</p>}
 

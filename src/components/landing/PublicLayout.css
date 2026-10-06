@@ -237,6 +237,37 @@
   vertical-align: -1px;
 }
 
+.mp-footer-legal {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 20px;
+}
+
+.mp-footer-legal a {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.mp-footer-legal a:hover {
+  color: var(--mp-lime);
+}
+
+.mp-company-line {
+  max-width: 760px;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+.mp-company-line a {
+  color: inherit;
+}
+
 .mp-footer-copy {
   font-size: 0.8rem;
   opacity: 0.5;
@@ -478,4 +509,30 @@
   .mp-mobile-menu-ball {
     animation: none !important;
   }
+}
+
+/* Terms consent checkbox (booking + event registration) */
+.mp-terms-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 4px 0 14px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--mp-navy, #14243e);
+  text-align: left;
+  cursor: pointer;
+}
+
+.mp-terms-consent input {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--mp-blue, #1c3fba);
+}
+
+.mp-terms-consent a {
+  color: var(--mp-blue, #1c3fba);
+  font-weight: 700;
 }
