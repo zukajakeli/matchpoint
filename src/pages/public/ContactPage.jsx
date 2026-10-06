@@ -33,7 +33,7 @@ export default function ContactPage() {
             <div className="mp-contact-card">
               <div className="mp-contact-icon">&#128231;</div>
               <h3>{t("contact_email")}</h3>
-              <p><a href="mailto:info@matchpoint.ge">info@matchpoint.ge</a></p>
+              <p><a href="mailto:matchpoint.ge@gmail.com">matchpoint.ge@gmail.com</a></p>
             </div>
             <div className="mp-contact-card">
               <div className="mp-contact-icon">&#128336;</div>

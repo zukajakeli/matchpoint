@@ -12,7 +12,7 @@ export const COMPANY = {
   addressEn: "17 Petre Kavtaradze St, Tbilisi 0186, Georgia",
   phone: "+995 555 613 330",
   phoneHref: "tel:+995555613330",
-  email: "info@matchpoint.ge",
+  email: "matchpoint.ge@gmail.com",
   website: "www.matchpoint.ge",
 };
 
