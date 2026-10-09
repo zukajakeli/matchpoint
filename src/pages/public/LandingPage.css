@@ -2,9 +2,9 @@
 
 /* ── Hero ─────────────────────────────────────────────────────────── */
 .mp-hero {
-  /* venue photo with a 15% black overlay so the text stays readable */
+  /* venue photo with a 25% black overlay so the text stays readable */
   background:
-    linear-gradient(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15)),
+    linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.25)),
     url("/hero-tables.jpg") center / cover no-repeat,
     var(--mp-navy, #14243e);
   color: var(--mp-white, #fff);
@@ -12,30 +12,25 @@
   text-align: center;
   position: relative;
   overflow: hidden;
+  /* Georgian is shown in Mtavruli (uppercase); Noto covers those glyphs */
+  font-family: "Loos Extended", "DM Sans", "Noto Sans Georgian", system-ui, sans-serif;
+  min-height: 560px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .mp-hero-content {
-  max-width: 720px;
+  width: 100%;
+  max-width: 900px;
   margin: 0 auto;
   position: relative;
   z-index: 2;
 }
 
-.mp-hero-logo-wrapper {
-  margin-bottom: 24px;
-}
-
-.mp-hero-logo {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 4px solid var(--mp-lime, #d5f296);
-  box-shadow: 0 0 40px rgba(213, 242, 150, 0.25);
-}
-
 .mp-hero-title {
-  font-size: 3.5rem;
+  font-size: clamp(1.5rem, 5.4vw, 3.5rem);
+  white-space: nowrap;
   font-weight: 900;
   line-height: 1.1;
   margin: 0 0 20px;
@@ -48,7 +43,11 @@
   opacity: 0.95;
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.6);
   margin: 0 0 36px;
-  line-height: 1.6;
+  line-height: 1.35;
+}
+
+.mp-hero .mp-btn {
+  font-family: inherit;
 }
 
 .mp-hero-actions {
@@ -404,15 +403,7 @@
 @media (max-width: 768px) {
   .mp-hero {
     padding: 48px 16px 64px;
-  }
-
-  .mp-hero-title {
-    font-size: 2.2rem;
-  }
-
-  .mp-hero-logo {
-    width: 90px;
-    height: 90px;
+    min-height: 480px;
   }
 
   .mp-section {

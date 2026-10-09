@@ -32,24 +32,24 @@ export default function LandingPage() {
   }, []);
 
   const dateLang = lang === "ka" ? "ka-GE" : "en-GB";
+  // Hero text is all caps. CSS text-transform leaves Georgian alone, but
+  // toUpperCase maps it to Mtavruli (Georgian capitals).
+  const caps = (key) => t(key).toUpperCase();
 
   return (
     <PublicLayout seo={homeSeo()}>
       {/* Hero Banner */}
       <section className="mp-hero">
         <div className="mp-hero-content">
-          <div className="mp-hero-logo-wrapper">
-            <img src="/matchpoint-logo.png" alt={VENUE_NAME} className="mp-hero-logo" />
-          </div>
           <h1 className="mp-hero-title">
-            {t("hero_title_1")}<br />{t("hero_title_2")}
+            {caps("hero_title_1")} {caps("hero_title_2")}
           </h1>
           <p className="mp-hero-subtitle">
-            {t("hero_subtitle")}
+            {caps("hero_subtitle")}
           </p>
           <div className="mp-hero-actions">
-            <Link to="/book" className="mp-btn mp-btn-primary">{t("hero_book")}</Link>
-            <Link to="/events" className="mp-btn mp-btn-outline">{t("hero_events")}</Link>
+            <Link to="/book" className="mp-btn mp-btn-primary">{caps("hero_book")}</Link>
+            <Link to="/events" className="mp-btn mp-btn-outline">{caps("hero_events")}</Link>
           </div>
         </div>
       </section>
