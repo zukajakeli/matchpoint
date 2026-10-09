@@ -2,7 +2,11 @@
 
 /* ── Hero ─────────────────────────────────────────────────────────── */
 .mp-hero {
-  background: var(--mp-navy, #14243e);
+  /* venue photo with a 15% black overlay so the text stays readable */
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15)),
+    url("/hero-tables.jpg") center / cover no-repeat,
+    var(--mp-navy, #14243e);
   color: var(--mp-white, #fff);
   padding: 80px 24px 100px;
   text-align: center;
@@ -36,11 +40,13 @@
   line-height: 1.1;
   margin: 0 0 20px;
   letter-spacing: -1px;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
 }
 
 .mp-hero-subtitle {
   font-size: 1.15rem;
-  opacity: 0.8;
+  opacity: 0.95;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.6);
   margin: 0 0 36px;
   line-height: 1.6;
 }

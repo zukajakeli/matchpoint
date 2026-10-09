@@ -36,7 +36,7 @@ export default function LandingPage() {
   return (
     <PublicLayout seo={homeSeo()}>
       {/* Hero Banner */}
-      <section className="mp-hero mp-dots-white mp-grain-strong">
+      <section className="mp-hero">
         <div className="mp-hero-content">
           <div className="mp-hero-logo-wrapper">
             <img src="/matchpoint-logo.png" alt={VENUE_NAME} className="mp-hero-logo" />
@@ -51,10 +51,6 @@ export default function LandingPage() {
             <Link to="/book" className="mp-btn mp-btn-primary">{t("hero_book")}</Link>
             <Link to="/events" className="mp-btn mp-btn-outline">{t("hero_events")}</Link>
           </div>
-        </div>
-        <div className="mp-hero-decoration">
-          <div className="mp-hero-ball" />
-          <div className="mp-hero-ball mp-hero-ball-2" />
         </div>
       </section>
 
