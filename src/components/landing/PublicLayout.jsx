@@ -23,6 +23,9 @@ export default function PublicLayout({ children, seo }) {
     { to: "/contact", label: t("nav_contact") },
   ];
   const clubLink = { to: "/account", label: t("nav_account") };
+  // Not in the desktop bar (no room); listed in the mobile menu and footer.
+  const corporateLink = { to: "/corporate-events", label: t("nav_corporate") };
+  const menuLinks = [...navLinks, corporateLink];
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Close the mobile menu whenever the route changes
@@ -103,7 +106,7 @@ export default function PublicLayout({ children, seo }) {
         <div className="mp-mobile-menu-ball" aria-hidden="true" />
         <div className="mp-mobile-menu-ball small" aria-hidden="true" />
         <nav className="mp-mobile-menu-nav">
-          {navLinks.map((link, i) => (
+          {menuLinks.map((link, i) => (
             <Link
               key={link.to}
               to={link.to}
@@ -121,7 +124,7 @@ export default function PublicLayout({ children, seo }) {
         </nav>
         <Link
           to={clubLink.to}
-          style={{ "--i": navLinks.length }}
+          style={{ "--i": menuLinks.length }}
           className="mp-mobile-club"
           onClick={() => setMenuOpen(false)}
         >
@@ -140,7 +143,7 @@ export default function PublicLayout({ children, seo }) {
             <span>{VENUE_NAME}</span>
           </div>
           <div className="mp-footer-links">
-            {[...navLinks, clubLink].map((link) => (
+            {[...menuLinks, clubLink].map((link) => (
               <Link key={link.to} to={link.to}>{link.label}</Link>
             ))}
           </div>

@@ -5,9 +5,14 @@ const PRODUCTS_SELECT = "id, title, subtitle, description, image, display_order,
 
 export async function fetchProducts(onlyActive = false) {
   assertSupabase();
-  let query = supabase.from("products").select(PRODUCTS_SELECT).order("display_order", { ascending: true });
-  if (onlyActive) query = query.eq("is_active", true);
-  const { data, error } = await query;
+  const run = (fields) => {
+    let query = supabase.from("products").select(fields).order("display_order", { ascending: true });
+    if (onlyActive) query = query.eq("is_active", true);
+    return query;
+  };
+  let { data, error } = await run(`${PRODUCTS_SELECT}, show_on_home`);
+  // show_on_home arrives with the 2026-10-11 migration; keep working without it.
+  if (error && /show_on_home/.test(error.message || "")) ({ data, error } = await run(PRODUCTS_SELECT));
   if (error) throw error;
   return data || [];
 }

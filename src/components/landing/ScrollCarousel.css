@@ -1,0 +1,101 @@
+/* ── Horizontal scroller (services, reviews, gallery) ───────────────── */
+.mp-carousel {
+  --mp-carousel-gap: 24px;
+  position: relative;
+}
+
+.mp-carousel-track {
+  display: flex;
+  gap: var(--mp-carousel-gap);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 4px;
+  scrollbar-width: none;
+  /* room for card shadows and hover lift */
+  padding: 8px 4px 20px;
+  margin: -8px -4px -20px;
+}
+
+.mp-carousel-track::-webkit-scrollbar {
+  display: none;
+}
+
+.mp-carousel-track:focus-visible {
+  outline: 3px solid var(--mp-blue, #1c3fba);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
+.mp-carousel-item {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+
+.mp-carousel-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 3;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-top: -24px;
+  border: none;
+  border-radius: 50%;
+  background: var(--mp-navy, #14243e);
+  color: var(--mp-white, #fff);
+  box-shadow: 0 6px 20px rgba(20, 36, 62, 0.25);
+  cursor: pointer;
+  transition: background 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+
+.mp-carousel-arrow.prev { left: -24px; }
+.mp-carousel-arrow.next { right: -24px; }
+
+.mp-carousel-arrow:hover:not(:disabled) {
+  background: var(--mp-blue, #1c3fba);
+  transform: scale(1.06);
+}
+
+.mp-carousel-arrow:focus-visible {
+  outline: 3px solid var(--mp-lime, #d5f296);
+  outline-offset: 2px;
+}
+
+.mp-carousel-arrow:disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Arrows only where there is a pointer and enough room */
+@media (min-width: 769px) and (hover: hover) {
+  .mp-carousel.is-scrollable .mp-carousel-arrow {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 1290px) {
+  .mp-carousel-arrow.prev { left: 4px; }
+  .mp-carousel-arrow.next { right: 4px; }
+}
+
+@media (max-width: 768px) {
+  .mp-carousel {
+    --mp-carousel-gap: 14px;
+  }
+
+  /* bleed to the screen edge so the next card peeks in */
+  .mp-carousel-track {
+    margin-inline: -16px;
+    padding-inline: 16px;
+    scroll-padding-inline: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mp-carousel-arrow {
+    transition: none;
+  }
+}

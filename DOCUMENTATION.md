@@ -191,6 +191,18 @@ If either variable is missing, `isSupabaseConfigured` returns `false` and the `s
 
 ---
 
+### Public website: homepage, corporate events, Google reviews
+
+The homepage is **hero slider → services scroller → Google reviews → venue gallery**. Its content, and the `/corporate-events` page, are edited at **/superadmin/website**. Which services appear in the homepage scroller is set with the "Homepage" column on **/superadmin/products**.
+
+One-time setup:
+
+1. **Database:** run `supabase/migrations/2026-10-11_homepage_cms.sql` in the Supabase SQL editor (it is also part of `schema.sql`). This adds `hero_slides` (with four starter slides), `gallery_images`, `site_content`, `corporate_inquiries` and `products.show_on_home`.
+2. **Corporate inquiry email:** deploy the edge function with `supabase functions deploy corporate-inquiry`. It uses the existing `RESEND_API_KEY` and `BOOKING_EMAIL_FROM` secrets. The recipient is `INQUIRY_EMAIL_TO`, which defaults to `matchpoint.ge@gmail.com`. Every inquiry is also stored in `corporate_inquiries`, and the admin Inquiries tab shows whether its email was sent. The form only reports success once Resend has accepted the email. Spam protection: a honeypot field, a minimum fill time and at most 3 inquiries per IP per hour.
+3. **Google reviews:** set these Vercel environment variables (server-side, without the `VITE_` prefix): `GOOGLE_PLACES_API_KEY` (a key with *Places API (New)* enabled) and either `GOOGLE_PLACE_ID` or `GOOGLE_MAPS_URL` (the Business Profile link). Optionally set `GOOGLE_REVIEWS_URL` for the "read more" button. `/api/reviews` calls Place Details. Google returns **at most 5 reviews** (its "most relevant" selection). The site shows the five-star ones with real text, longest and newest first. Without a key the section shows only the link to Google, never placeholder reviews.
+
+Images uploaded in the admin are resized and compressed in the browser (WebP), stored as data URLs like the existing products/events, and served from `/api/image?type=slide|gallery&id=…`.
+
 ## 5. Database Schema (Supabase)
 
 Run `supabase/schema.sql` in the Supabase SQL Editor to set up or recreate the schema. The file is idempotent (`CREATE IF NOT EXISTS`, `DROP POLICY IF EXISTS`, etc.).

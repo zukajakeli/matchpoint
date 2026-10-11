@@ -1,66 +1,74 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase, isSupabaseConfigured } from "../../services/supabaseClient";
+import { fetchHeroSlides, fetchGalleryImages } from "../../services/supabase/siteContentApi";
 import { useTranslation } from "../../i18n/LanguageContext";
 import PublicLayout from "../../components/landing/PublicLayout";
 import ContentImage from "../../components/landing/ContentImage";
+import HeroSlider from "../../components/landing/HeroSlider";
+import ScrollCarousel from "../../components/landing/ScrollCarousel";
+import ReviewsSection from "../../components/landing/ReviewsSection";
+import GallerySection from "../../components/landing/GallerySection";
+import { DEFAULT_SLIDES } from "../../content/siteDefaults";
 import { homeSeo } from "../../seo/seo";
 import "./LandingPage.css";
 
-const VENUE_NAME = import.meta.env.VITE_VENUE_NAME || "MatchPoint";
+const PRODUCT_FIELDS = "id, title, subtitle, updated_at";
 
+// Services marked "show on homepage". Falls back to all active services if
+// the show_on_home column hasn't been added to the database yet.
+async function loadHomeProducts() {
+  const base = () => supabase.from("products").select(PRODUCT_FIELDS).eq("is_active", true).order("display_order");
+  const { data, error } = await base().eq("show_on_home", true);
+  if (!error) return data || [];
+  const fallback = await base();
+  return fallback.data || [];
+}
+
+// Homepage: hero slider → services → Google reviews → venue gallery.
 export default function LandingPage() {
-  const { t, lang } = useTranslation();
+  const { t } = useTranslation();
+  const [slides, setSlides] = useState(isSupabaseConfigured ? null : DEFAULT_SLIDES);
+  const [nextEvent, setNextEvent] = useState(null);
   const [products, setProducts] = useState([]);
-  const [events, setEvents] = useState([]);
-  const [blogPosts, setBlogPosts] = useState([]);
+  const [gallery, setGallery] = useState([]);
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) return;
 
-    supabase.from("products").select("id, title, subtitle, updated_at").eq("is_active", true).order("display_order").then(({ data }) => {
-      setProducts(data || []);
-    });
+    fetchHeroSlides()
+      .then((rows) => setSlides(rows.length ? rows : DEFAULT_SLIDES))
+      .catch(() => setSlides(DEFAULT_SLIDES));
 
-    supabase.from("events").select("id, title, event_date, entry_fee, updated_at").eq("is_active", true).order("event_date", { ascending: true }).limit(3).then(({ data }) => {
-      setEvents(data || []);
-    });
+    supabase
+      .from("events")
+      .select("id, title, event_date, updated_at")
+      .eq("is_active", true)
+      .gte("event_date", new Date().toISOString())
+      .order("event_date", { ascending: true })
+      .limit(1)
+      .then(({ data }) => setNextEvent(data?.[0] || null));
 
-    supabase.from("blog_posts").select("id, title, slug, excerpt, published_at, updated_at").eq("is_published", true).order("published_at", { ascending: false }).limit(3).then(({ data }) => {
-      setBlogPosts(data || []);
-    });
+    loadHomeProducts().then(setProducts).catch(() => setProducts([]));
+
+    fetchGalleryImages().then(setGallery).catch(() => setGallery([]));
   }, []);
-
-  const dateLang = lang === "ka" ? "ka-GE" : "en-GB";
-  // Hero text is all caps. CSS text-transform leaves Georgian alone, but
-  // toUpperCase maps it to Mtavruli (Georgian capitals).
-  const caps = (key) => t(key).toUpperCase();
 
   return (
     <PublicLayout seo={homeSeo()}>
-      {/* Hero Banner */}
-      <section className="mp-hero">
-        <div className="mp-hero-content">
-          <h1 className="mp-hero-title">
-            {caps("hero_title_1")} {caps("hero_title_2")}
-          </h1>
-          <p className="mp-hero-subtitle">
-            {caps("hero_subtitle")}
-          </p>
-          <div className="mp-hero-actions">
-            <Link to="/book" className="mp-btn mp-btn-primary">{caps("hero_book")}</Link>
-            <Link to="/events" className="mp-btn mp-btn-outline">{caps("hero_events")}</Link>
-          </div>
-        </div>
-      </section>
+      {slides ? (
+        <HeroSlider slides={slides} nextEvent={nextEvent} />
+      ) : (
+        <div className="mp-hero-slider-placeholder" aria-hidden="true" />
+      )}
 
-      {/* Products / Services */}
+      {/* Services / products */}
       {products.length > 0 && (
-        <section className="mp-section" id="services">
-          <h2 className="mp-section-title">{t("section_services")}</h2>
-          <div className="mp-products-grid">
+        <section className="mp-section mp-services" id="services" aria-labelledby="mp-services-title">
+          <h2 className="mp-section-title" id="mp-services-title">{t("section_services")}</h2>
+          <ScrollCarousel label={t("section_services")}>
             {products.map((p) => (
-              <Link to={`/services/${p.id}`} key={p.id} className="mp-product-card">
+              <Link to={`/services/${p.id}`} key={p.id} className="mp-product-card mp-carousel-item">
                 <ContentImage type="product" row={p} alt={p.title} className="mp-product-image" />
                 <div className="mp-product-info">
                   <h3>{p.title}</h3>
@@ -68,64 +76,13 @@ export default function LandingPage() {
                 </div>
               </Link>
             ))}
-          </div>
+          </ScrollCarousel>
         </section>
       )}
 
-      {/* Upcoming Events */}
-      {events.length > 0 && (
-        <section className="mp-section mp-section-alt mp-dots-blue" id="events">
-          <h2 className="mp-section-title">{t("section_events")}</h2>
-          <div className="mp-events-grid">
-            {events.map((ev) => (
-              <Link to={`/events/${ev.id}`} key={ev.id} className="mp-event-card">
-                <ContentImage type="event" row={ev} alt={ev.title} className="mp-event-image" />
-                <div className="mp-event-info">
-                  <span className="mp-event-date">
-                    {new Date(ev.event_date).toLocaleDateString(dateLang, { timeZone: "Asia/Tbilisi", weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                  </span>
-                  <h3>{ev.title}</h3>
-                  {ev.entry_fee > 0 && <span className="mp-event-fee">{ev.entry_fee} ₾ {t("events_entry")}</span>}
-                </div>
-              </Link>
-            ))}
-          </div>
-          <div className="mp-section-cta">
-            <Link to="/events" className="mp-btn mp-btn-secondary">{t("section_view_all_events")}</Link>
-          </div>
-        </section>
-      )}
+      <ReviewsSection />
 
-      {/* Blog Preview */}
-      {blogPosts.length > 0 && (
-        <section className="mp-section mp-dots mp-grain" id="blog">
-          <h2 className="mp-section-title">{t("section_blog")}</h2>
-          <div className="mp-blog-grid">
-            {blogPosts.map((post) => (
-              <Link to={`/blog/${post.slug}`} key={post.id} className="mp-blog-card">
-                <ContentImage type="blog" row={post} alt={post.title} className="mp-blog-image" />
-                <div className="mp-blog-info">
-                  <h3>{post.title}</h3>
-                  {post.excerpt && <p>{post.excerpt}</p>}
-                  <span className="mp-blog-date">
-                    {post.published_at && new Date(post.published_at).toLocaleDateString(dateLang, { timeZone: "Asia/Tbilisi", day: "numeric", month: "short", year: "numeric" })}
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-          <div className="mp-section-cta">
-            <Link to="/blog" className="mp-btn mp-btn-secondary">{t("section_read_more")}</Link>
-          </div>
-        </section>
-      )}
-
-      {/* CTA Banner */}
-      <section className="mp-cta-banner mp-dots-white mp-grain">
-        <h2>{t("cta_title")}</h2>
-        <p>{t("cta_subtitle")}</p>
-        <Link to="/book" className="mp-btn mp-btn-lime">{t("cta_book")}</Link>
-      </section>
+      <GallerySection images={gallery} />
     </PublicLayout>
   );
 }

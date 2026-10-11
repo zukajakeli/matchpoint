@@ -80,6 +80,16 @@ export default function ProductsAdminPage() {
     }
   };
 
+  const handleToggleHome = async (p) => {
+    try {
+      await updateProduct(p.id, { show_on_home: !p.show_on_home });
+      load();
+    } catch (err) {
+      console.error("Toggle failed:", err);
+      alert("Couldn't change the homepage setting. Has the 2026-10-11 database migration been run?");
+    }
+  };
+
   const handleToggleActive = async (p) => {
     try {
       await updateProduct(p.id, { is_active: !p.is_active });
@@ -148,6 +158,7 @@ export default function ProductsAdminPage() {
                   <th>Image</th>
                   <th>Title</th>
                   <th>Status</th>
+                  <th title="Shown in the homepage services scroller">Homepage</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -170,6 +181,17 @@ export default function ProductsAdminPage() {
                       >
                         {p.is_active ? "Active" : "Hidden"}
                       </button>
+                    </td>
+                    <td>
+                      {p.show_on_home !== undefined && (
+                        <button
+                          onClick={() => handleToggleHome(p)}
+                          className={`admin-status-badge ${p.show_on_home && p.is_active ? "active" : "inactive"}`}
+                          title={p.is_active ? "" : "Hidden services never appear on the homepage"}
+                        >
+                          {p.show_on_home ? "Shown" : "Not shown"}
+                        </button>
+                      )}
                     </td>
                     <td>
                       <button onClick={() => handleEdit(p)} className="admin-btn admin-btn-sm">Edit</button>

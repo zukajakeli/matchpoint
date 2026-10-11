@@ -1,5 +1,5 @@
 // Serves images stored in the database as base64 data URLs at a real URL:
-//   /api/image?type=blog|event|product&id=<uuid>[&v=<updated_at>]
+//   /api/image?type=blog|event|product|slide|gallery&id=<uuid>[&v=<updated_at>]
 // Needed for link-preview images (og:image) and lets pages load images
 // separately instead of inside the data. With ?v= the URL changes on every
 // edit, so it is cached for a year.
@@ -10,6 +10,8 @@ const SOURCES = {
   blog: { table: "blog_posts", column: "cover_image", visible: "is_published=eq.true" },
   event: { table: "events", column: "image", visible: "is_active=eq.true" },
   product: { table: "products", column: "image", visible: "is_active=eq.true" },
+  slide: { table: "hero_slides", column: "image", visible: "is_active=eq.true" },
+  gallery: { table: "gallery_images", column: "image", visible: "is_active=eq.true" },
 };
 
 export async function GET(request) {
@@ -29,6 +31,8 @@ export async function GET(request) {
   if (!value) return new Response("Not found", { status: 404, headers: { "Cache-Control": "public, s-maxage=300" } });
 
   if (/^https?:\/\//.test(value)) return Response.redirect(value, 302);
+  // A file shipped with the site, e.g. /hero-tables.jpg
+  if (/^\/[\w./-]+$/.test(value) && !value.includes("..")) return Response.redirect(new URL(value, request.url), 302);
 
   const match = /^data:(image\/[\w.+-]+);base64,(.+)$/s.exec(value);
   if (!match) return new Response("Unsupported image", { status: 415 });

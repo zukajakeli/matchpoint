@@ -1,0 +1,268 @@
+/* ── Superadmin → Website ────────────────────────────────────────────── */
+.wa-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 20px;
+  padding: 6px;
+  border-radius: 14px;
+  background: var(--mp-off-white, #f0f2f5);
+}
+
+.wa-tab {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #374151;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.wa-tab.active {
+  background: var(--mp-navy, #14243e);
+  color: var(--mp-lime, #d5f296);
+}
+
+.wa-intro {
+  margin: 0 0 16px;
+  color: #4b5563;
+}
+
+.wa-muted {
+  color: #6b7280;
+}
+
+.wa-notice {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.wa-notice.success { background: #ecfdf5; color: #065f46; }
+.wa-notice.error { background: #fef2f2; color: #991b1b; }
+
+.wa-notice button {
+  border: none;
+  background: none;
+  color: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.wa-error-text {
+  display: block;
+  margin-top: 6px;
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.wa-placeholder-tag {
+  display: inline-block;
+  margin: 8px 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.wa-placeholder-tag.small {
+  margin: 4px 0 0;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+}
+
+.wa-bilingual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.wa-bilingual > div {
+  position: relative;
+}
+
+.wa-bilingual input,
+.wa-bilingual textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding-left: 40px !important;
+}
+
+.wa-lang {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--mp-navy, #14243e);
+  color: var(--mp-lime, #d5f296);
+  font-size: 0.65rem;
+  font-weight: 800;
+}
+
+.wa-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 8px;
+  font-weight: 600;
+}
+
+.wa-order {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.wa-slide-previews {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  margin: 10px 0;
+}
+
+.wa-preview-desktop,
+.wa-preview-mobile {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #14243e;
+}
+
+.wa-preview-desktop { width: 320px; aspect-ratio: 16 / 9; }
+.wa-preview-mobile { width: 90px; aspect-ratio: 9 / 14; }
+
+.wa-preview-desktop img,
+.wa-preview-mobile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.wa-preview-desktop span,
+.wa-preview-mobile span {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 0.7rem;
+}
+
+.wa-thumb-wide {
+  width: 120px;
+  height: 68px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.wa-upload {
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.wa-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wa-gallery-card {
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.wa-gallery-card.is-hidden img {
+  opacity: 0.4;
+}
+
+.wa-gallery-card img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.wa-gallery-body {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.wa-gallery-body input {
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.wa-gallery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.wa-subhead {
+  margin-top: 28px !important;
+}
+
+.wa-option {
+  margin: 0 0 16px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.wa-option legend {
+  padding: 0 6px;
+  font-weight: 800;
+  color: var(--mp-navy, #14243e);
+}
+
+.wa-icon-field input {
+  width: 80px;
+  font-size: 1.3rem;
+}
+
+.wa-option-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.wa-inquiries td {
+  vertical-align: top;
+}
+
+.wa-message {
+  max-width: 340px;
+  white-space: pre-wrap;
+  font-size: 0.88rem;
+}
+
+@media (max-width: 700px) {
+  .wa-bilingual {
+    grid-template-columns: 1fr;
+  }
+
+  .wa-preview-desktop {
+    width: 220px;
+  }
+}

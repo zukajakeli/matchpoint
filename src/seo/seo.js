@@ -64,7 +64,7 @@ export function escapeHtml(value) {
 export function imagePath(type, row) {
   const value = type === "blog" ? row?.cover_image : row?.image;
   if (value === null || value === "") return null;
-  if (typeof value === "string" && /^https?:\/\//.test(value)) return value;
+  if (typeof value === "string" && (/^https?:\/\//.test(value) || /^\/[\w./-]+$/.test(value))) return value;
   if (!row?.id) return null;
   const version = row.updated_at ? `&v=${encodeURIComponent(Date.parse(row.updated_at) || row.updated_at)}` : "";
   return `/api/image?type=${type}&id=${encodeURIComponent(row.id)}${version}`;
@@ -160,6 +160,22 @@ export function productSeo(product) {
     path: `/services/${product.id}`,
     image: imagePath("product", product),
   };
+}
+
+export function corporateSeo(title, description) {
+  return pageSeo(title, description, "/corporate-events", {
+    image: "/hero-tables.jpg",
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      name: title,
+      serviceType: "Corporate events and team building",
+      description,
+      provider: { "@id": `${SITE.url}/#club` },
+      areaServed: { "@type": "City", name: "Tbilisi" },
+      url: absoluteUrl("/corporate-events"),
+    },
+  });
 }
 
 export function pageSeo(title, description, path, extra = {}) {

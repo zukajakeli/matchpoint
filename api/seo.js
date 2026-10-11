@@ -3,7 +3,8 @@
 // Google) see the real title, description and image without running JS.
 // Browsers get the same SPA as before. Routed here by vercel.json.
 
-import { blogPostSeo, eventSeo, productSeo, injectHead, pageSeo } from "../src/seo/seo.js";
+import { blogPostSeo, eventSeo, productSeo, corporateSeo, injectHead, pageSeo } from "../src/seo/seo.js";
+import translations from "../src/i18n/translations.js";
 import { selectOne, UUID } from "./_lib/supabase.js";
 
 let template = null;
@@ -17,9 +18,17 @@ async function loadTemplate(request) {
 }
 
 // Public URL of each type (after the rewrite the function only sees /api/seo).
-const PATHS = { blog: "/blog/", event: "/events/", product: "/services/" };
+const PATHS = { blog: "/blog/", event: "/events/", product: "/services/", page: "/" };
+
+// Static pages that have their own metadata (Georgian, the default language)
+const PAGES = {
+  "corporate-events": () => corporateSeo(translations.ka.corp_title, translations.ka.corp_hero_sub),
+};
 
 const LOADERS = {
+  async page(key) {
+    return PAGES[key] ? PAGES[key]() : null;
+  },
   async blog(key) {
     const post = await selectOne(
       "blog_posts",

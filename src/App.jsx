@@ -15,6 +15,7 @@ import BookingCancelledPage from "./pages/BookingCancelledPage";
 import ProductsAdminPage from "./pages/ProductsAdminPage";
 import BlogAdminPage from "./pages/BlogAdminPage";
 import EventsAdminPage from "./pages/EventsAdminPage";
+import WebsiteAdminPage from "./pages/WebsiteAdminPage";
 import GlobalSoundButtons from "./components/GlobalSoundButtons";
 import HomeDashboard from "./components/HomeDashboard";
 import BookingNotifications from "./components/BookingNotifications";
@@ -41,6 +42,7 @@ const BlogListPage = React.lazy(() => import("./pages/public/BlogListPage"));
 const BlogPostPage = React.lazy(() => import("./pages/public/BlogPostPage"));
 const EventsListPage = React.lazy(() => import("./pages/public/EventsListPage"));
 const EventDetailPage = React.lazy(() => import("./pages/public/EventDetailPage"));
+const CorporateEventsPage = React.lazy(() => import("./pages/public/CorporateEventsPage"));
 
 // ─── Staff portal (all internal pages, password-protected) ────────────────────
 // role: "superadmin" | "staff" — staff has limited nav & routes
@@ -172,6 +174,7 @@ function StaffPortal({ role = "superadmin" }) {
           {isSuperadmin && <Link className="nav-link" to={`${basePath}/products`}>Products</Link>}
           {isSuperadmin && <Link className="nav-link" to={`${basePath}/blog`}>Blog</Link>}
           {isSuperadmin && <Link className="nav-link" to={`${basePath}/events`}>Events</Link>}
+          {isSuperadmin && <Link className="nav-link" to={`${basePath}/website`}>Website</Link>}
           {isSuperadmin && <Link className="nav-link" to={`${basePath}/sales`}>Sales</Link>}
           <Link className="nav-link home-link" to={basePath}>Home</Link>
           <button onClick={toggleSidebar} className="sidebar-toggle-btn">
@@ -227,6 +230,7 @@ function StaffPortal({ role = "superadmin" }) {
           {isSuperadmin && <Route path={`${basePath}/products`} element={<ProductsAdminPage />} />}
           {isSuperadmin && <Route path={`${basePath}/blog`} element={<BlogAdminPage />} />}
           {isSuperadmin && <Route path={`${basePath}/events`} element={<EventsAdminPage />} />}
+          {isSuperadmin && <Route path={`${basePath}/website`} element={<WebsiteAdminPage />} />}
         </Routes>
       </main>
 
@@ -292,6 +296,9 @@ function AppContent() {
           {/* Events */}
           <Route path="/events" element={<EventsListPage />} />
           <Route path="/events/:id" element={<EventDetailPage />} />
+
+          {/* Corporate events + inquiry form */}
+          <Route path="/corporate-events" element={<CorporateEventsPage />} />
 
           {/* Legal (required by the payment provider) */}
           <Route path="/terms" element={<LegalPage slug="terms" />} />

@@ -13,6 +13,10 @@
       "destination": "/api/seo?type=product&key=:id"
     },
     {
+      "source": "/corporate-events",
+      "destination": "/api/seo?type=page&key=corporate-events"
+    },
+    {
       "source": "/sitemap.xml",
       "destination": "/api/sitemap"
     },
