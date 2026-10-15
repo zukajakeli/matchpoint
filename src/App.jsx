@@ -9,6 +9,7 @@ import BookingsPage from "./pages/BookingsPage";
 import TableViewPage from "./pages/TableViewPage";
 import ClubPage from "./pages/club/ClubPage";
 import ScrollToTop from "./components/ScrollToTop";
+import MetaPixel from "./components/MetaPixel";
 import BookingPublicPage from "./pages/BookingPublicPage";
 import BookingSuccessPage from "./pages/BookingSuccessPage";
 import BookingCancelledPage from "./pages/BookingCancelledPage";
@@ -324,6 +325,7 @@ function App() {
   return (
     <Router>
       <ScrollToTop />
+      <MetaPixel />
       <AppContent />
     </Router>
   );

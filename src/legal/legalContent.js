@@ -16,7 +16,7 @@ export const COMPANY = {
   website: "www.matchpoint.ge",
 };
 
-export const LEGAL_UPDATED = "2026-10-06";
+export const LEGAL_UPDATED = "2026-10-15";
 
 // Hours before the booked start time until which a cancellation is refunded.
 export const FREE_CANCELLATION_HOURS = 24;
@@ -184,7 +184,7 @@ export const LEGAL_PAGES = {
                 "ბარათის მონაცემებს ვერ ვხედავთ და არ ვინახავთ — მათ ამუშავებს გადახდის პროვაიდერი Flitt. ჩვენთან ინახება მხოლოდ ბარათის ნომრის ბოლო ციფრები.",
                 "კლუბის წევრობისას: სახელი, გვარი, ტელეფონი, ელ. ფოსტა, საჭიროების შემთხვევაში პირადი ნომერი, ვიზიტების ისტორია და ქულები.",
                 "ღონისძიებაზე რეგისტრაციისას: სახელი, ელ. ფოსტა, ტელეფონი.",
-                "ტექნიკური მონაცემები: ენის არჩევანი და შესვლის სესია ინახება თქვენს ბრაუზერში (localStorage).",
+                "ტექნიკური მონაცემები: ენის არჩევანი და შესვლის სესია ინახება თქვენს ბრაუზერში (localStorage). საჯარო გვერდებზე Meta Pixel იყენებს ქუქი-ფაილებს ვიზიტების გასაზომად.",
               ],
             },
           ],
@@ -213,7 +213,8 @@ export const LEGAL_PAGES = {
                 "Flitt — ბარათით გადახდა;",
                 "Supabase — მონაცემთა ბაზა და ავტორიზაცია;",
                 "Vercel — ვებგვერდის ჰოსტინგი;",
-                "Resend — ელ. ფოსტის გაგზავნა (ჯავშნის დადასტურება, შესვლის ბმული).",
+                "Resend — ელ. ფოსტის გაგზავნა (ჯავშნის დადასტურება, შესვლის ბმული);",
+                "Meta Platforms (Meta Pixel) — ვებგვერდის ვიზიტებისა და Facebook/Instagram რეკლამის ეფექტიანობის გაზომვა. Meta იყენებს ქუქი-ფაილებს და იღებს ინფორმაციას გვერდის ნახვების, მოწყობილობისა და IP მისამართის შესახებ.",
               ],
             },
             "ამ პროვაიდერების სერვერები შეიძლება მდებარეობდეს საქართველოს ფარგლებს გარეთ; მონაცემთა გადაცემა ხორციელდება კანონით დადგენილი დაცვის გარანტიებით.",
@@ -254,7 +255,7 @@ export const LEGAL_PAGES = {
                 "We never see or store your card details — payments are processed by Flitt. We keep only the last digits of the card number.",
                 "Club membership: first and last name, phone, email, personal ID number if required, visit history and points.",
                 "Event registration: name, email, phone.",
-                "Technical: your language choice and sign-in session are stored in your browser (localStorage).",
+                "Technical: your language choice and sign-in session are stored in your browser (localStorage). On public pages the Meta Pixel uses cookies to measure visits.",
               ],
             },
           ],
@@ -283,7 +284,8 @@ export const LEGAL_PAGES = {
                 "Flitt — card payments;",
                 "Supabase — database and sign-in;",
                 "Vercel — website hosting;",
-                "Resend — email delivery (booking confirmations, sign-in links).",
+                "Resend — email delivery (booking confirmations, sign-in links);",
+                "Meta Platforms (Meta Pixel) — measuring website visits and how well our Facebook/Instagram ads work. Meta uses cookies and receives information about pages viewed, your device and IP address.",
               ],
             },
             "These providers may store data outside Georgia; transfers are made with the safeguards required by law.",
