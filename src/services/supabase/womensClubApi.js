@@ -47,7 +47,7 @@ export async function fetchWcSessions({ from } = {}) {
   assertSupabase();
   let query = supabase
     .from("womens_club_sessions")
-    .select("id, starts_at, capacity, is_open, note, womens_club_registrations(count)")
+    .select("id, starts_at, ends_at, capacity, is_open, note, womens_club_registrations(count)")
     .order("starts_at", { ascending: true });
   if (from) query = query.gte("starts_at", from);
   const { data, error } = await query;
@@ -113,4 +113,40 @@ export async function removeWcParticipant(id) {
   assertSupabase();
   const { error } = await supabase.from("womens_club_registrations").delete().eq("id", id);
   if (error) throw error;
+}
+
+// ── Weekly time slots (template for each week's sessions) ────────────
+export async function fetchWcSlots() {
+  assertSupabase();
+  const { data, error } = await supabase
+    .from("womens_club_slots")
+    .select("id, weekday, start_time, end_time, capacity, is_active")
+    .order("weekday", { ascending: true })
+    .order("start_time", { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function saveWcSlot(id, fields) {
+  assertSupabase();
+  const query = id
+    ? supabase.from("womens_club_slots").update({ ...fields, updated_at: new Date().toISOString() }).eq("id", id)
+    : supabase.from("womens_club_slots").insert(fields);
+  const { error } = await query;
+  if (error) throw error;
+}
+
+export async function deleteWcSlot(id) {
+  assertSupabase();
+  const { error } = await supabase.from("womens_club_slots").delete().eq("id", id);
+  if (error) throw error;
+}
+
+// Creates the sessions of one week (its Monday, YYYY-MM-DD) from the
+// active time slots. Returns how many were added.
+export async function fillWcWeek(monday) {
+  assertSupabase();
+  const { data, error } = await supabase.rpc("womens_club_admin_fill_week", { p_monday: monday });
+  if (error) throw error;
+  return data || 0;
 }

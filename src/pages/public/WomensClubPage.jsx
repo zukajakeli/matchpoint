@@ -3,7 +3,7 @@ import { useTranslation } from "../../i18n/LanguageContext";
 import PublicLayout from "../../components/landing/PublicLayout";
 import { isSupabaseConfigured } from "../../services/supabaseClient";
 import { fetchWcSchedule, registerWc, wcErrorCode, WC_LEVELS } from "../../services/supabase/womensClubApi";
-import { sessionParts, sessionState, validateWcForm } from "../../utils/womensClub";
+import { sessionParts, sessionState, timeRange, validateWcForm } from "../../utils/womensClub";
 import { pageSeo } from "../../seo/seo";
 import "./WomensClubPage.css";
 
@@ -31,7 +31,8 @@ const SERVER_FIELD_ERRORS = {
 
 function SessionOption({ session, selected, onSelect, lang, t }) {
   const state = sessionState(session);
-  const { weekday, day, time } = sessionParts(session.starts_at, lang);
+  const { weekday, day } = sessionParts(session.starts_at, lang);
+  const time = timeRange(session.starts_at, session.ends_at);
   const disabled = state !== "open";
   const few = state === "open" && session.spots_left <= 3;
   const label =
@@ -148,7 +149,11 @@ export default function WomensClubPage() {
         level: form.level,
       });
       const session = sessions?.find((s) => s.id === form.sessionId);
-      setDone({ name: form.firstName.trim(), startsAt: result?.starts_at || session?.starts_at });
+      setDone({
+        name: form.firstName.trim(),
+        startsAt: result?.starts_at || session?.starts_at,
+        endsAt: result?.ends_at || session?.ends_at,
+      });
       load();
     } catch (err) {
       const code = wcErrorCode(err);
@@ -198,7 +203,7 @@ export default function WomensClubPage() {
             {parts && (
               <div className="wc-done-session">
                 <span className="wc-done-day">{parts.weekday}, {parts.day}</span>
-                <span className="wc-done-time">{parts.time}</span>
+                <span className="wc-done-time">{timeRange(done.startsAt, done.endsAt)}</span>
               </div>
             )}
             <p className="wc-done-where">{t("wc_done_where")}</p>

@@ -57,6 +57,19 @@ export function sessionParts(startsAt, lang = "ka") {
   };
 }
 
+// "19:30–21:00" (or just "19:30" without an end time)
+export function timeRange(startsAt, endsAt) {
+  const start = sessionParts(startsAt, "en").time;
+  return endsAt ? `${start}–${sessionParts(endsAt, "en").time}` : start;
+}
+
+// weekday 1 = Monday … 7 = Sunday (womens_club_slots)
+const KA_WEEKDAYS_MON = ["ორშაბათი", "სამშაბათი", "ოთხშაბათი", "ხუთშაბათი", "პარასკევი", "შაბათი", "კვირა"];
+const EN_WEEKDAYS_MON = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+export function weekdayName(weekday, lang = "en") {
+  return (lang === "ka" ? KA_WEEKDAYS_MON : EN_WEEKDAYS_MON)[weekday - 1] || "";
+}
+
 // Admin: local Tbilisi date + time → ISO timestamp. Georgia is UTC+4 all
 // year (no daylight saving).
 export function tbilisiToIso(date, time) {

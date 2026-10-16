@@ -2,6 +2,10 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   fetchWcSessions,
+  fetchWcSlots,
+  saveWcSlot,
+  deleteWcSlot,
+  fillWcWeek,
   createWcSessions,
   updateWcSession,
   deleteWcSession,
@@ -12,7 +16,7 @@ import {
   WC_DEFAULT_CAPACITY,
   WC_LEVELS,
 } from "../services/supabase/womensClubApi";
-import { buildWeek, isoToTbilisi, nextMonday, sessionParts, tbilisiToIso, validateWcForm } from "../utils/womensClub";
+import { isoToTbilisi, nextMonday, sessionParts, tbilisiToIso, timeRange, validateWcForm, weekdayName } from "../utils/womensClub";
 import { formatPhone } from "../utils/memberAnalytics";
 import { SITE } from "../seo/seo";
 import "./AdminPages.css";
@@ -25,7 +29,6 @@ import "./WomensClubAdminPage.css";
 // (enforced by RLS and the womens_club_* database functions).
 
 const SHARE_URL = `${SITE.url}/womens-club`;
-const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const LEVEL_LABELS = {
   never: "Complete beginner",
   beginner: "Beginner",
@@ -78,27 +81,98 @@ function csv(rows) {
   return "﻿" + ["#,First name,Last name,Phone,Email,Level,Member ID,Source,Registered (UTC)", ...lines].join("\r\n");
 }
 
-// ── Week builder ─────────────────────────────────────────────────────
-function WeekBuilder({ existing, onCreated, setNotice }) {
-  const [weekStart, setWeekStart] = useState(nextMonday());
-  const [days, setDays] = useState([0, 1, 2, 3, 4]);
-  const [time, setTime] = useState("19:30");
-  const [capacity, setCapacity] = useState(WC_DEFAULT_CAPACITY);
+// ── Weekly time slots (template) ─────────────────────────────────────
+const hhmm = (t) => String(t || "").slice(0, 5);
+
+function SlotRow({ slot, canEdit, onSaved, setNotice }) {
+  const [draft, setDraft] = useState({
+    weekday: slot.weekday,
+    start_time: hhmm(slot.start_time),
+    end_time: hhmm(slot.end_time),
+    capacity: slot.capacity,
+    is_active: slot.is_active,
+  });
+  const dirty =
+    draft.weekday !== slot.weekday || draft.start_time !== hhmm(slot.start_time) || draft.end_time !== hhmm(slot.end_time) ||
+    Number(draft.capacity) !== slot.capacity || draft.is_active !== slot.is_active;
+
+  const save = async () => {
+    if (draft.end_time <= draft.start_time) return setNotice({ type: "error", text: "The end time must be after the start time." });
+    try {
+      await saveWcSlot(slot.id, { ...draft, capacity: Number(draft.capacity) });
+      setNotice({ type: "success", text: "Time slot saved. It applies to weeks created from now on." });
+      onSaved();
+    } catch (err) {
+      setNotice({ type: "error", text: errorText(err) });
+    }
+  };
+
+  const remove = async () => {
+    if (!confirm(`Remove ${weekdayName(slot.weekday)} ${hhmm(slot.start_time)} from the weekly time slots? Sessions already created stay.`)) return;
+    try {
+      await deleteWcSlot(slot.id);
+      onSaved();
+    } catch (err) {
+      setNotice({ type: "error", text: errorText(err) });
+    }
+  };
+
+  return (
+    <tr className={draft.is_active ? "" : "wcA-inactive"}>
+      <td>
+        <select value={draft.weekday} disabled={!canEdit} onChange={(e) => setDraft({ ...draft, weekday: Number(e.target.value) })} aria-label="Day">
+          {[1, 2, 3, 4, 5, 6, 7].map((d) => <option key={d} value={d}>{weekdayName(d)}</option>)}
+        </select>
+      </td>
+      <td><input type="time" value={draft.start_time} disabled={!canEdit} onChange={(e) => setDraft({ ...draft, start_time: e.target.value })} aria-label="From" /></td>
+      <td><input type="time" value={draft.end_time} disabled={!canEdit} onChange={(e) => setDraft({ ...draft, end_time: e.target.value })} aria-label="To" /></td>
+      <td><input type="number" min={1} max={500} value={draft.capacity} disabled={!canEdit} onChange={(e) => setDraft({ ...draft, capacity: e.target.value })} aria-label="Places" className="wcA-num" /></td>
+      <td><input type="checkbox" checked={draft.is_active} disabled={!canEdit} onChange={(e) => setDraft({ ...draft, is_active: e.target.checked })} aria-label="Active" /></td>
+      {canEdit && (
+        <td className="nowrap">
+          {dirty && <button type="button" className="admin-btn admin-btn-sm admin-btn-primary" onClick={save}>Save</button>}
+          <button type="button" className="admin-btn admin-btn-sm admin-btn-danger" onClick={remove}>Remove</button>
+        </td>
+      )}
+    </tr>
+  );
+}
+
+function TimeSlots({ canEdit, onWeekCreated, setNotice }) {
+  const [slots, setSlots] = useState(null);
+  const [monday, setMonday] = useState(nextMonday());
   const [busy, setBusy] = useState(false);
 
-  const toggleDay = (d) => setDays((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]));
+  const load = useCallback(async () => {
+    try {
+      setSlots(await fetchWcSlots());
+    } catch (err) {
+      setNotice({ type: "error", text: errorText(err) });
+      setSlots([]);
+    }
+  }, [setNotice]);
 
-  const create = async (e) => {
-    e.preventDefault();
-    if (!days.length) return setNotice({ type: "error", text: "Pick at least one day." });
-    const taken = new Set(existing.map((s) => new Date(s.starts_at).getTime()));
-    const rows = buildWeek(weekStart, days, time, Number(capacity)).filter((r) => !taken.has(new Date(r.starts_at).getTime()));
-    if (!rows.length) return setNotice({ type: "error", text: "Those sessions already exist." });
+  useEffect(() => { load(); }, [load]);
+
+  const add = async () => {
+    try {
+      await saveWcSlot(null, { weekday: 1, start_time: "19:30", end_time: "21:00", capacity: WC_DEFAULT_CAPACITY });
+      load();
+    } catch (err) {
+      setNotice({ type: "error", text: errorText(err) });
+    }
+  };
+
+  const createWeek = async () => {
     setBusy(true);
     try {
-      await createWcSessions(rows);
-      setNotice({ type: "success", text: `${rows.length} session${rows.length === 1 ? "" : "s"} created.` });
-      onCreated();
+      const added = await fillWcWeek(monday);
+      setNotice(
+        added
+          ? { type: "success", text: `${added} session${added === 1 ? "" : "s"} created for the week of ${monday}.` }
+          : { type: "error", text: "That week already has these sessions." }
+      );
+      onWeekCreated();
     } catch (err) {
       setNotice({ type: "error", text: errorText(err) });
     }
@@ -106,33 +180,42 @@ function WeekBuilder({ existing, onCreated, setNotice }) {
   };
 
   return (
-    <form className="wcA-card wcA-builder" onSubmit={create}>
-      <h3>Create a week</h3>
-      <div className="wcA-builder-row">
-        <label>
-          Week starting (Monday)
-          <input type="date" value={weekStart} onChange={(e) => setWeekStart(e.target.value)} required />
-        </label>
-        <label>
-          Time
-          <input type="time" value={time} onChange={(e) => setTime(e.target.value)} required />
-        </label>
-        <label>
-          Places per session
-          <input type="number" min={1} max={500} value={capacity} onChange={(e) => setCapacity(e.target.value)} required />
-        </label>
-      </div>
-      <div className="wcA-days" role="group" aria-label="Days">
-        {WEEKDAYS.map((name, i) => (
-          <label key={name} className={`wcA-day ${days.includes(i) ? "on" : ""}`}>
-            <input type="checkbox" checked={days.includes(i)} onChange={() => toggleDay(i)} />
-            {name}
-          </label>
-        ))}
-      </div>
-      <p className="wcA-muted">Times are Tbilisi time. Days that already have a session at this time are skipped. Each session can be edited afterwards.</p>
-      <button type="submit" className="admin-btn admin-btn-sm admin-btn-primary" disabled={busy}>{busy ? "Creating…" : "Create sessions"}</button>
-    </form>
+    <div className="wcA-card">
+      <h3>Weekly time slots</h3>
+      <p className="wcA-muted">
+        Every week's sessions are created from these automatically, for this week and the next. Change one session on its own below; changes here apply to weeks created afterwards.
+      </p>
+      {slots === null ? (
+        <p className="wcA-muted">Loading…</p>
+      ) : (
+        <div className="admin-table-wrapper">
+          <table className="admin-table wcA-slots">
+            <thead>
+              <tr><th>Day</th><th>From</th><th>To</th><th>Places</th><th>Active</th>{canEdit && <th />}</tr>
+            </thead>
+            <tbody>
+              {slots.map((slot) => (
+                <SlotRow key={`${slot.id}-${slot.weekday}-${slot.start_time}-${slot.end_time}-${slot.capacity}-${slot.is_active}`} slot={slot} canEdit={canEdit} onSaved={load} setNotice={setNotice} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {canEdit && (
+        <div className="wcA-slot-actions">
+          <button type="button" className="admin-btn admin-btn-sm" onClick={add}>+ Add time slot</button>
+          <span className="wcA-fill">
+            <label>
+              Create a week now (Monday)
+              <input type="date" value={monday} onChange={(e) => setMonday(e.target.value)} />
+            </label>
+            <button type="button" className="admin-btn admin-btn-sm admin-btn-primary" onClick={createWeek} disabled={busy || !monday}>
+              {busy ? "Creating…" : "Create sessions"}
+            </button>
+          </span>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -259,17 +342,25 @@ function SessionRow({ session, canEdit, clubBase, onChanged, setNotice }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const local = isoToTbilisi(session.starts_at);
-  const [draft, setDraft] = useState({ date: local.date, time: local.time, capacity: session.capacity, note: session.note || "" });
+  const [draft, setDraft] = useState({
+    date: local.date,
+    time: local.time,
+    endTime: session.ends_at ? isoToTbilisi(session.ends_at).time : "",
+    capacity: session.capacity,
+    note: session.note || "",
+  });
   const past = new Date(session.starts_at) <= new Date();
   const full = session.taken >= session.capacity;
   const status = past ? "Past" : !session.is_open ? "Closed" : full ? "Full" : "Open";
-  const { weekday, day, time } = sessionParts(session.starts_at, "en");
+  const { weekday, day } = sessionParts(session.starts_at, "en");
+  const time = timeRange(session.starts_at, session.ends_at);
 
   const save = async (e) => {
     e.preventDefault();
     try {
       await updateWcSession(session.id, {
         starts_at: tbilisiToIso(draft.date, draft.time),
+        ends_at: draft.endTime ? tbilisiToIso(draft.date, draft.endTime) : null,
         capacity: Number(draft.capacity),
         note: draft.note.trim() || null,
       });
@@ -334,7 +425,8 @@ function SessionRow({ session, canEdit, clubBase, onChanged, setNotice }) {
       {editing && (
         <form className="wcA-edit" onSubmit={save}>
           <label>Date<input type="date" value={draft.date} onChange={(e) => setDraft({ ...draft, date: e.target.value })} required /></label>
-          <label>Time<input type="time" value={draft.time} onChange={(e) => setDraft({ ...draft, time: e.target.value })} required /></label>
+          <label>From<input type="time" value={draft.time} onChange={(e) => setDraft({ ...draft, time: e.target.value })} required /></label>
+          <label>To<input type="time" value={draft.endTime} onChange={(e) => setDraft({ ...draft, endTime: e.target.value })} /></label>
           <label>Places<input type="number" min={1} max={500} value={draft.capacity} onChange={(e) => setDraft({ ...draft, capacity: e.target.value })} required /></label>
           <label className="wide">Note (staff only)<input value={draft.note} onChange={(e) => setDraft({ ...draft, note: e.target.value })} placeholder="e.g. coach: Nino" /></label>
           {Number(draft.capacity) < session.taken && (
@@ -401,7 +493,11 @@ export default function WomensClubAdminPage({ isSuperadmin, basePath }) {
   const addSingle = async (e) => {
     e.preventDefault();
     try {
-      await createWcSessions([{ starts_at: tbilisiToIso(single.date, single.time), capacity: Number(single.capacity) }]);
+      await createWcSessions([{
+        starts_at: tbilisiToIso(single.date, single.time),
+        ends_at: single.endTime ? tbilisiToIso(single.date, single.endTime) : null,
+        capacity: Number(single.capacity),
+      }]);
       setSingle(null);
       setNotice({ type: "success", text: "Session added." });
       load();
@@ -432,7 +528,7 @@ export default function WomensClubAdminPage({ isSuperadmin, basePath }) {
         </div>
       )}
 
-      {isSuperadmin && <WeekBuilder existing={sessions || []} onCreated={load} setNotice={setNotice} />}
+      <TimeSlots canEdit={isSuperadmin} onWeekCreated={load} setNotice={setNotice} />
 
       <div className="wcA-list-head">
         <h3>Sessions</h3>
@@ -441,7 +537,7 @@ export default function WomensClubAdminPage({ isSuperadmin, basePath }) {
             <input type="checkbox" checked={showPast} onChange={(e) => setShowPast(e.target.checked)} /> Show past sessions
           </label>
           {isSuperadmin && !single && (
-            <button type="button" className="admin-btn admin-btn-sm" onClick={() => setSingle({ date: nextMonday(), time: "19:30", capacity: WC_DEFAULT_CAPACITY })}>
+            <button type="button" className="admin-btn admin-btn-sm" onClick={() => setSingle({ date: nextMonday(), time: "19:30", endTime: "21:00", capacity: WC_DEFAULT_CAPACITY })}>
               + Single session
             </button>
           )}
@@ -451,7 +547,8 @@ export default function WomensClubAdminPage({ isSuperadmin, basePath }) {
       {single && (
         <form className="wcA-card wcA-edit" onSubmit={addSingle}>
           <label>Date<input type="date" value={single.date} onChange={(e) => setSingle({ ...single, date: e.target.value })} required /></label>
-          <label>Time<input type="time" value={single.time} onChange={(e) => setSingle({ ...single, time: e.target.value })} required /></label>
+          <label>From<input type="time" value={single.time} onChange={(e) => setSingle({ ...single, time: e.target.value })} required /></label>
+          <label>To<input type="time" value={single.endTime} onChange={(e) => setSingle({ ...single, endTime: e.target.value })} /></label>
           <label>Places<input type="number" min={1} max={500} value={single.capacity} onChange={(e) => setSingle({ ...single, capacity: e.target.value })} required /></label>
           <span className="wcA-add-actions">
             <button type="submit" className="admin-btn admin-btn-sm admin-btn-primary">Add session</button>

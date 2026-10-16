@@ -2021,6 +2021,39 @@ create table if not exists public.womens_club_sessions (
   updated_at timestamptz not null default now()
 );
 create index if not exists womens_club_sessions_starts_at on public.womens_club_sessions (starts_at);
+alter table public.womens_club_sessions add column if not exists ends_at timestamptz;
+
+-- Weekly time slots: the template every week's sessions are made from.
+-- weekday: 1 = Monday … 7 = Sunday. Times are Tbilisi time.
+create table if not exists public.womens_club_slots (
+  id uuid primary key default gen_random_uuid(),
+  weekday smallint not null check (weekday between 1 and 7),
+  start_time time not null,
+  end_time time not null,
+  capacity integer not null default 16 check (capacity between 1 and 500),
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+insert into public.womens_club_slots (weekday, start_time, end_time)
+select * from (values
+  (1, time '19:30', time '21:00'),
+  (2, time '19:30', time '21:00'),
+  (3, time '19:30', time '21:00'),
+  (4, time '19:30', time '21:00'),
+  (5, time '19:30', time '21:00'),
+  (6, time '17:30', time '19:00'),
+  (7, time '12:30', time '14:00')
+) as seed(weekday, start_time, end_time)
+where not exists (select 1 from public.womens_club_slots);
+
+-- Weeks whose sessions were already created from the template, so a
+-- session the admin deletes isn't recreated.
+create table if not exists public.womens_club_weeks (
+  monday date primary key,
+  created_at timestamptz not null default now()
+);
 
 create table if not exists public.womens_club_registrations (
   id uuid primary key default gen_random_uuid(),
@@ -2037,6 +2070,8 @@ create index if not exists womens_club_registrations_ip_recent on public.womens_
 
 alter table public.womens_club_sessions enable row level security;
 alter table public.womens_club_registrations enable row level security;
+alter table public.womens_club_slots enable row level security;
+alter table public.womens_club_weeks enable row level security;
 
 -- Staff see the schedule and the lists; the superadmin manages them.
 -- The public page goes through womens_club_schedule() / womens_club_register() only.
@@ -2052,25 +2087,70 @@ create policy "staff_read" on public.womens_club_registrations
   for select to authenticated using (public.is_staff());
 create policy "superadmin_delete" on public.womens_club_registrations
   for delete to authenticated using (public.is_superadmin());
+drop policy if exists "staff_read" on public.womens_club_slots;
+drop policy if exists "superadmin_write" on public.womens_club_slots;
+drop policy if exists "staff_read" on public.womens_club_weeks;
+create policy "staff_read" on public.womens_club_slots
+  for select to authenticated using (public.is_staff());
+create policy "superadmin_write" on public.womens_club_slots
+  for all to authenticated using (public.is_superadmin()) with check (public.is_superadmin());
+create policy "staff_read" on public.womens_club_weeks
+  for select to authenticated using (public.is_staff());
 
--- One week of sessions: the Monday–Sunday week (Tbilisi time) of the next
--- upcoming session, from now on. Places left only, no personal data.
+-- Creates a week's sessions from the active time slots, once per week.
+-- Weeks that already have sessions (made by hand) are left alone.
+create or replace function public.womens_club_fill_week(p_monday date, p_force boolean default false)
+returns integer
+language plpgsql security definer set search_path = '' as $$
+declare
+  v_count integer;
+begin
+  insert into public.womens_club_weeks (monday) values (p_monday) on conflict do nothing;
+  if not found and not p_force then
+    return 0;
+  end if;
+  if not p_force and exists (
+    select 1 from public.womens_club_sessions s
+    where (s.starts_at at time zone 'Asia/Tbilisi')::date between p_monday and p_monday + 6
+  ) then
+    return 0;
+  end if;
+  insert into public.womens_club_sessions (starts_at, ends_at, capacity)
+  select (p_monday + (t.weekday - 1) + t.start_time) at time zone 'Asia/Tbilisi',
+         (p_monday + (t.weekday - 1) + t.end_time) at time zone 'Asia/Tbilisi',
+         t.capacity
+  from public.womens_club_slots t
+  where t.is_active
+    and not exists (
+      select 1 from public.womens_club_sessions s
+      where s.starts_at = (p_monday + (t.weekday - 1) + t.start_time) at time zone 'Asia/Tbilisi'
+    );
+  get diagnostics v_count = row_count;
+  return v_count;
+end;
+$$;
+
+-- One week of sessions for the public page: the next 7 days. This week's
+-- and next week's sessions are created from the time slots on first use.
+-- Places left only, no personal data.
+drop function if exists public.womens_club_schedule();
 create or replace function public.womens_club_schedule()
-returns table (id uuid, starts_at timestamptz, capacity integer, spots_left integer, is_open boolean)
-language sql stable security definer set search_path = '' as $$
-  with week as (
-    select date_trunc('week', min(s.starts_at) at time zone 'Asia/Tbilisi') as monday
-    from public.womens_club_sessions s
-    where s.starts_at > now()
-  )
-  select s.id, s.starts_at, s.capacity,
+returns table (id uuid, starts_at timestamptz, ends_at timestamptz, capacity integer, spots_left integer, is_open boolean)
+language plpgsql security definer set search_path = '' as $$
+declare
+  v_monday date := date_trunc('week', now() at time zone 'Asia/Tbilisi')::date;
+begin
+  perform public.womens_club_fill_week(v_monday);
+  perform public.womens_club_fill_week(v_monday + 7);
+  return query
+  select s.id, s.starts_at, s.ends_at, s.capacity,
          greatest(s.capacity - (select count(*) from public.womens_club_registrations r where r.session_id = s.id), 0)::integer,
          s.is_open
-  from public.womens_club_sessions s, week w
+  from public.womens_club_sessions s
   where s.starts_at > now()
-    and s.starts_at at time zone 'Asia/Tbilisi' >= w.monday
-    and s.starts_at at time zone 'Asia/Tbilisi' < w.monday + interval '7 days'
+    and s.starts_at < now() + interval '7 days'
   order by s.starts_at;
+end;
 $$;
 
 -- Shared by the public form and the admin. The session row is locked
@@ -2176,6 +2256,7 @@ $$;
 -- Public registration (anon). Email is required here, optional for the
 -- admin. At most 20 registrations per connection per hour, which still
 -- leaves room for many phones behind one mobile network address.
+drop function if exists public.womens_club_register(uuid, text, text, text, text, text);
 create or replace function public.womens_club_register(
   p_session_id uuid,
   p_first_name text,
@@ -2183,7 +2264,7 @@ create or replace function public.womens_club_register(
   p_phone text,
   p_email text,
   p_level text
-) returns table (starts_at timestamptz)
+) returns table (starts_at timestamptz, ends_at timestamptz)
 language plpgsql security definer set search_path = '' as $$
 declare
   v_headers json := nullif(current_setting('request.headers', true), '')::json;
@@ -2201,7 +2282,7 @@ begin
     raise exception 'INVALID_EMAIL';
   end if;
   v_reg := public.womens_club_add_registration(p_session_id, p_first_name, p_last_name, p_phone, p_email, p_level, 'web', v_hash);
-  return query select s.starts_at from public.womens_club_sessions s where s.id = v_reg.session_id;
+  return query select s.starts_at, s.ends_at from public.womens_club_sessions s where s.id = v_reg.session_id;
 end;
 $$;
 
@@ -2224,6 +2305,21 @@ begin
 end;
 $$;
 
+-- Admin: create a week's sessions from the time slots on demand
+create or replace function public.womens_club_admin_fill_week(p_monday date)
+returns integer
+language plpgsql security definer set search_path = '' as $$
+begin
+  if not public.is_superadmin() then
+    raise exception 'NOT_ALLOWED';
+  end if;
+  return public.womens_club_fill_week(p_monday, true);
+end;
+$$;
+
+revoke all on function public.womens_club_fill_week(date, boolean) from public, anon, authenticated;
+revoke all on function public.womens_club_admin_fill_week(date) from public, anon;
+grant execute on function public.womens_club_admin_fill_week(date) to authenticated;
 revoke all on function public.womens_club_add_registration(uuid, text, text, text, text, text, text, text) from public, anon, authenticated;
 revoke all on function public.womens_club_schedule() from public;
 revoke all on function public.womens_club_register(uuid, text, text, text, text, text) from public;

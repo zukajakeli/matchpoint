@@ -360,3 +360,41 @@
 .wcA .admin-table td {
   vertical-align: middle;
 }
+
+/* Weekly time slots */
+.wcA-slots input,
+.wcA-slots select {
+  padding: 6px 8px;
+}
+
+.wcA-num {
+  width: 70px;
+}
+
+.wcA-inactive td {
+  opacity: 0.55;
+}
+
+.wcA-slot-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.wcA-fill {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.wcA-fill label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #374151;
+}
