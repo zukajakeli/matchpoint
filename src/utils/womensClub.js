@@ -1,5 +1,5 @@
 // Women's Social Club helpers shared by the public page and the admin.
-// Validation mirrors wc_add_registration() in supabase/schema.sql so most
+// Validation mirrors wc_add_application() in supabase/schema.sql so most
 // mistakes are caught before the request is sent.
 
 const LEVELS = ["never", "beginner", "intermediate", "advanced"];
@@ -15,7 +15,7 @@ export function normalizePhone(value) {
   return digits;
 }
 
-export function validateWcForm(form, { requireEmail = true, requireSession = true } = {}) {
+export function validateWcForm(form, { requireEmail = true, requireSlot = true } = {}) {
   const errors = {};
   const first = String(form.firstName || "").trim();
   const last = String(form.lastName || "").trim();
@@ -28,63 +28,31 @@ export function validateWcForm(form, { requireEmail = true, requireSession = tru
   const email = String(form.email || "").trim();
   if ((requireEmail || email) && (!EMAIL_RE.test(email) || email.length > 200)) errors.email = "wc_err_email";
   if (!LEVELS.includes(form.level)) errors.level = "wc_err_level";
-  if (requireSession && !form.sessionId) errors.sessionId = "wc_err_session";
+  if (requireSlot && !form.slotId) errors.slotId = "wc_err_slot";
   return errors;
 }
 
-export function sessionState(session) {
-  if (!session.is_open) return "closed";
-  if (session.spots_left <= 0) return "full";
+export function slotState(slot) {
+  if (!slot.is_open) return "closed";
+  if (slot.spots_left <= 0) return "full";
   return "open";
 }
 
-// Georgian names are spelled out: not every phone browser ships Georgian
-// date data, and Intl then silently falls back to English.
-const KA_WEEKDAYS = ["კვირა", "ორშაბათი", "სამშაბათი", "ოთხშაბათი", "ხუთშაბათი", "პარასკევი", "შაბათი"];
-const KA_MONTHS = ["იანვარი", "თებერვალი", "მარტი", "აპრილი", "მაისი", "ივნისი", "ივლისი", "აგვისტო", "სექტემბერი", "ოქტომბერი", "ნოემბერი", "დეკემბერი"];
-const EN_WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const EN_MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+// weekday: 1 = Monday … 7 = Sunday (ISO, as stored in wc_slots)
+export const WEEKDAY_NAMES = {
+  ka: ["ორშაბათი", "სამშაბათი", "ოთხშაბათი", "ხუთშაბათი", "პარასკევი", "შაბათი", "კვირა"],
+  en: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+};
 
-// { weekday: "ორშაბათი", day: "20 ოქტომბერი", time: "19:30" } in Tbilisi time
-export function sessionParts(startsAt, lang = "ka") {
-  const local = new Date(new Date(startsAt).getTime() + 4 * 3600 * 1000); // UTC+4, no DST
-  const weekdays = lang === "ka" ? KA_WEEKDAYS : EN_WEEKDAYS;
-  const months = lang === "ka" ? KA_MONTHS : EN_MONTHS;
-  return {
-    weekday: weekdays[local.getUTCDay()],
-    day: `${local.getUTCDate()} ${months[local.getUTCMonth()]}`,
-    time: local.toISOString().slice(11, 16),
-  };
+export function weekdayName(weekday, lang = "ka") {
+  return (WEEKDAY_NAMES[lang] || WEEKDAY_NAMES.ka)[weekday - 1] || "";
 }
 
-// Admin: local Tbilisi date + time → ISO timestamp. Georgia is UTC+4 all
-// year (no daylight saving).
-export function tbilisiToIso(date, time) {
-  return new Date(`${date}T${time}:00+04:00`).toISOString();
+// "19:30:00" → "19:30"
+export function hhmm(time) {
+  return String(time || "").slice(0, 5);
 }
 
-export function isoToTbilisi(iso) {
-  const d = new Date(new Date(iso).getTime() + 4 * 3600 * 1000);
-  return { date: d.toISOString().slice(0, 10), time: d.toISOString().slice(11, 16) };
-}
-
-// Sessions for one week: weekStart is the Monday (YYYY-MM-DD), days are
-// 0 = Monday … 6 = Sunday.
-export function buildWeek(weekStart, days, time, capacity) {
-  const [y, m, d] = weekStart.split("-").map(Number);
-  return [...days]
-    .sort((a, b) => a - b)
-    .map((offset) => {
-      const day = new Date(Date.UTC(y, m - 1, d + offset)).toISOString().slice(0, 10);
-      return { starts_at: tbilisiToIso(day, time), capacity };
-    });
-}
-
-// The Monday on or after today (Tbilisi), as YYYY-MM-DD
-export function nextMonday(now = new Date()) {
-  const { date } = isoToTbilisi(now.toISOString());
-  const [y, m, d] = date.split("-").map(Number);
-  const today = new Date(Date.UTC(y, m - 1, d));
-  const add = (8 - today.getUTCDay()) % 7;
-  return new Date(Date.UTC(y, m - 1, d + add)).toISOString().slice(0, 10);
+export function slotTime(slot) {
+  return `${hhmm(slot.start_time)}–${hhmm(slot.end_time)}`;
 }

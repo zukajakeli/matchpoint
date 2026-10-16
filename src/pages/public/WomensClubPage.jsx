@@ -2,22 +2,22 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "../../i18n/LanguageContext";
 import PublicLayout from "../../components/landing/PublicLayout";
 import { isSupabaseConfigured } from "../../services/supabaseClient";
-import { fetchWcSchedule, registerWc, wcErrorCode, WC_LEVELS } from "../../services/supabase/womensClubApi";
-import { sessionParts, sessionState, validateWcForm } from "../../utils/womensClub";
+import { applyWc, fetchWcSlots, wcErrorCode, WC_LEVELS } from "../../services/supabase/womensClubApi";
+import { slotState, slotTime, validateWcForm, weekdayName } from "../../utils/womensClub";
 import { pageSeo } from "../../seo/seo";
 import "./WomensClubPage.css";
 
-// Unlisted page shared in the club's WhatsApp group: not in any menu,
-// not in the sitemap, and marked noindex (also by vercel.json headers).
+// Unlisted application page shared in the club's WhatsApp group: not in
+// any menu, not in the sitemap, and marked noindex (also by vercel.json).
+// No booking or payment: each woman applies once, for one weekly time.
 
-const EMPTY = { firstName: "", lastName: "", phone: "", email: "", level: "", sessionId: "" };
+const EMPTY = { slotId: "", firstName: "", lastName: "", phone: "", email: "", level: "" };
 
 const SERVER_ERRORS = {
-  SESSION_FULL: "wc_err_full",
-  SESSION_CLOSED: "wc_err_closed",
-  SESSION_STARTED: "wc_err_closed",
-  SESSION_NOT_FOUND: "wc_err_closed",
-  ALREADY_REGISTERED: "wc_err_duplicate",
+  SLOT_FULL: "wc_err_full",
+  SLOT_CLOSED: "wc_err_closed",
+  SLOT_NOT_FOUND: "wc_err_closed",
+  ALREADY_APPLIED: "wc_err_duplicate",
   RATE_LIMITED: "wc_err_rate",
 };
 const SERVER_FIELD_ERRORS = {
@@ -28,35 +28,26 @@ const SERVER_FIELD_ERRORS = {
   INVALID_LEVEL: ["level", "wc_err_level"],
 };
 
-function SessionOption({ session, selected, onSelect, lang, t }) {
-  const state = sessionState(session);
-  const { weekday, day, time } = sessionParts(session.starts_at, lang);
+function SlotOption({ slot, selected, onSelect, lang, t }) {
+  const state = slotState(slot);
   const disabled = state !== "open";
-  const few = state === "open" && session.spots_left <= 3;
+  const few = state === "open" && slot.spots_left <= 3;
   const label =
     state === "full"
       ? t("wc_full")
       : state === "closed"
         ? t("wc_closed")
-        : session.spots_left === 1
+        : slot.spots_left === 1
           ? t("wc_spot_left")
-          : t("wc_spots_left").replace("{n}", session.spots_left);
+          : t("wc_spots_left").replace("{n}", slot.spots_left);
 
   return (
     <label className={`wc-session ${selected ? "is-selected" : ""} ${disabled ? "is-disabled" : ""}`}>
-      <input
-        type="radio"
-        name="sessionId"
-        value={session.id}
-        checked={selected}
-        disabled={disabled}
-        onChange={() => onSelect(session.id)}
-      />
+      <input type="radio" name="slotId" value={slot.id} checked={selected} disabled={disabled} onChange={() => onSelect(slot.id)} />
       <span className="wc-session-when">
-        <span className="wc-session-day">{weekday}</span>
-        <span className="wc-session-date">{day}</span>
+        <span className="wc-session-day">{weekdayName(slot.weekday, lang)}</span>
       </span>
-      <span className="wc-session-time">{time}</span>
+      <span className="wc-session-time">{slotTime(slot)}</span>
       <span className={`wc-session-spots ${disabled ? "none" : few ? "few" : ""}`}>{label}</span>
     </label>
   );
@@ -64,31 +55,28 @@ function SessionOption({ session, selected, onSelect, lang, t }) {
 
 export default function WomensClubPage() {
   const { t, lang } = useTranslation();
-  const [sessions, setSessions] = useState(null);
+  const [slots, setSlots] = useState(null);
   const [loadError, setLoadError] = useState(false);
   const [form, setForm] = useState(EMPTY);
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
-  const [done, setDone] = useState(null); // { name, startsAt }
+  const [done, setDone] = useState(null); // { name, slot }
   const formRef = useRef(null);
   const doneRef = useRef(null);
 
   const load = useCallback(async () => {
     if (!isSupabaseConfigured) {
       setLoadError(true);
-      setSessions([]);
-      return [];
+      setSlots([]);
+      return;
     }
     try {
-      const rows = await fetchWcSchedule();
-      setSessions(rows);
+      setSlots(await fetchWcSlots());
       setLoadError(false);
-      return rows;
     } catch {
       setLoadError(true);
-      setSessions((prev) => prev || []);
-      return null;
+      setSlots((prev) => prev || []);
     }
   }, []);
 
@@ -100,12 +88,12 @@ export default function WomensClubPage() {
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [load]);
 
-  // A selected session that has since filled up is unselected.
+  // A chosen time that has since filled up is unselected.
   useEffect(() => {
-    if (!form.sessionId || !sessions) return;
-    const s = sessions.find((x) => x.id === form.sessionId);
-    if (!s || sessionState(s) !== "open") setForm((f) => ({ ...f, sessionId: "" }));
-  }, [sessions, form.sessionId]);
+    if (!form.slotId || !slots) return;
+    const slot = slots.find((s) => s.id === form.slotId);
+    if (!slot || slotState(slot) !== "open") setForm((f) => ({ ...f, slotId: "" }));
+  }, [slots, form.slotId]);
 
   useEffect(() => {
     if (!done) return;
@@ -120,7 +108,9 @@ export default function WomensClubPage() {
   };
 
   const focusField = (field) => {
-    const el = formRef.current?.querySelector(`[name="${field}"]:not(:disabled)`) || formRef.current?.querySelector(`[data-field="${field}"]`);
+    const el =
+      formRef.current?.querySelector(`[name="${field}"]:not(:disabled)`) ||
+      formRef.current?.querySelector(`[data-field="${field}"]`);
     el?.focus?.();
     el?.scrollIntoView?.({ block: "center" });
   };
@@ -138,17 +128,16 @@ export default function WomensClubPage() {
     setSending(true);
     setMessage("");
     try {
-      const result = await registerWc({
-        sessionId: form.sessionId,
+      const result = await applyWc({
+        slotId: form.slotId,
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         phone: form.phone.trim(),
         email: form.email.trim(),
         level: form.level,
       });
-      const session = sessions?.find((s) => s.id === form.sessionId);
-      setDone({ name: form.firstName.trim(), startsAt: result?.starts_at || session?.starts_at });
-      load();
+      setDone({ name: form.firstName.trim(), slot: result || slots?.find((s) => s.id === form.slotId) });
+      setForm(EMPTY);
     } catch (err) {
       const code = wcErrorCode(err);
       if (SERVER_FIELD_ERRORS[code]) {
@@ -158,9 +147,9 @@ export default function WomensClubPage() {
         focusField(field);
       } else {
         setMessage(t(SERVER_ERRORS[code] || "wc_err_generic"));
-        if (["SESSION_FULL", "SESSION_CLOSED", "SESSION_STARTED", "SESSION_NOT_FOUND"].includes(code)) {
+        if (["SLOT_FULL", "SLOT_CLOSED", "SLOT_NOT_FOUND"].includes(code)) {
           await load();
-          focusField("sessionId");
+          focusField("slotId");
         }
       }
     }
@@ -186,7 +175,6 @@ export default function WomensClubPage() {
   const seo = pageSeo(t("wc_title"), t("wc_seo_desc"), "/womens-club", { noindex: true });
 
   if (done) {
-    const parts = done.startsAt ? sessionParts(done.startsAt, lang) : null;
     return (
       <PublicLayout seo={seo}>
         <div className="wc-page">
@@ -194,30 +182,20 @@ export default function WomensClubPage() {
             <div className="wc-done-icon" aria-hidden="true">✓</div>
             <h1>{t("wc_done_title")}</h1>
             <p>{t("wc_done_text").replace("{name}", done.name)}</p>
-            {parts && (
+            {done.slot && (
               <div className="wc-done-session">
-                <span className="wc-done-day">{parts.weekday}, {parts.day}</span>
-                <span className="wc-done-time">{parts.time}</span>
+                <span className="wc-done-day">{weekdayName(done.slot.weekday, lang)}</span>
+                <span className="wc-done-time">{slotTime(done.slot)}</span>
               </div>
             )}
             <p className="wc-done-where">{t("wc_done_where")}</p>
-            <button
-              type="button"
-              className="wc-secondary"
-              onClick={() => {
-                setForm((f) => ({ ...f, sessionId: "" }));
-                setDone(null);
-              }}
-            >
-              {t("wc_done_another")}
-            </button>
           </div>
         </div>
       </PublicLayout>
     );
   }
 
-  const anyOpen = sessions?.some((s) => sessionState(s) === "open");
+  const anyOpen = slots?.some((s) => slotState(s) === "open");
 
   return (
     <PublicLayout seo={seo}>
@@ -228,26 +206,19 @@ export default function WomensClubPage() {
         </header>
 
         <form className="wc-card" onSubmit={onSubmit} noValidate ref={formRef}>
-          <fieldset className="wc-step" data-field="sessionId" tabIndex={-1}>
-            <legend><span className="wc-step-num">1</span>{t("wc_step_session")}</legend>
-            {sessions === null && <p className="wc-muted">{t("wc_loading")}</p>}
-            {sessions && loadError && <p className="wc-error-box">{t("wc_load_error")}</p>}
-            {sessions && !loadError && sessions.length === 0 && <p className="wc-muted">{t("wc_no_sessions")}</p>}
-            {sessions && sessions.length > 0 && (
+          <fieldset className="wc-step" data-field="slotId" tabIndex={-1}>
+            <legend><span className="wc-step-num">1</span>{t("wc_step_slot")}</legend>
+            {slots === null && <p className="wc-muted">{t("wc_loading")}</p>}
+            {slots && loadError && <p className="wc-error-box">{t("wc_load_error")}</p>}
+            {slots && !loadError && slots.length === 0 && <p className="wc-muted">{t("wc_no_slots")}</p>}
+            {slots && slots.length > 0 && (
               <div className="wc-sessions" role="radiogroup">
-                {sessions.map((s) => (
-                  <SessionOption
-                    key={s.id}
-                    session={s}
-                    selected={form.sessionId === s.id}
-                    onSelect={(id) => set("sessionId", id)}
-                    lang={lang}
-                    t={t}
-                  />
+                {slots.map((slot) => (
+                  <SlotOption key={slot.id} slot={slot} selected={form.slotId === slot.id} onSelect={(id) => set("slotId", id)} lang={lang} t={t} />
                 ))}
               </div>
             )}
-            {errors.sessionId && <span className="wc-error">{t(errors.sessionId)}</span>}
+            {errors.slotId && <span className="wc-error">{t(errors.slotId)}</span>}
           </fieldset>
 
           <fieldset className="wc-step">
@@ -276,7 +247,7 @@ export default function WomensClubPage() {
 
           {message && <p className="wc-error-box" role="alert">{message}</p>}
 
-          <button type="submit" className="wc-submit" disabled={sending || (sessions && !anyOpen)}>
+          <button type="submit" className="wc-submit" disabled={sending || (slots && !anyOpen)}>
             {sending ? t("wc_sending") : t("wc_submit")}
           </button>
         </form>

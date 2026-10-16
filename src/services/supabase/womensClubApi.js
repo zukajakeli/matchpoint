@@ -1,6 +1,7 @@
-// Women's Social Club: weekly sessions with limited places.
-// The public page only calls wc_schedule() and wc_register(); the admin
-// reads the tables directly (RLS: staff read, superadmin write).
+// Women's Social Club: one application per person, for one of the fixed
+// weekly time slots (no booking, no payment). The public page only calls
+// wc_slot_list() and wc_apply(); the admin reads the tables directly
+// (RLS: staff read, superadmin write).
 
 import { supabase } from "../supabaseClient";
 import { assertSupabase } from "./assertSupabase";
@@ -13,22 +14,22 @@ export const WC_DEFAULT_CAPACITY = 16;
 export function wcErrorCode(error) {
   const match = String(error?.message || "").match(/[A-Z_]{5,}/);
   if (match) return match[0];
-  if (error?.code === "23505") return "ALREADY_REGISTERED";
+  if (error?.code === "23505") return "ALREADY_APPLIED";
   return "UNKNOWN";
 }
 
 // ── Public ───────────────────────────────────────────────────────────
-export async function fetchWcSchedule() {
+export async function fetchWcSlots() {
   assertSupabase();
-  const { data, error } = await supabase.rpc("wc_schedule");
+  const { data, error } = await supabase.rpc("wc_slot_list");
   if (error) throw error;
   return data || [];
 }
 
-export async function registerWc({ sessionId, firstName, lastName, phone, email, level }) {
+export async function applyWc({ slotId, firstName, lastName, phone, email, level }) {
   assertSupabase();
-  const { data, error } = await supabase.rpc("wc_register", {
-    p_session_id: sessionId,
+  const { data, error } = await supabase.rpc("wc_apply", {
+    p_slot_id: slotId,
     p_first_name: firstName,
     p_last_name: lastName,
     p_phone: phone,
@@ -40,54 +41,54 @@ export async function registerWc({ sessionId, firstName, lastName, phone, email,
 }
 
 // ── Admin ────────────────────────────────────────────────────────────
-export async function fetchWcSessions({ from } = {}) {
+export async function fetchWcSlotsAdmin() {
   assertSupabase();
-  let query = supabase
-    .from("wc_sessions")
-    .select("id, starts_at, capacity, is_open, note, wc_registrations(count)")
-    .order("starts_at", { ascending: true });
-  if (from) query = query.gte("starts_at", from);
-  const { data, error } = await query;
+  const { data, error } = await supabase
+    .from("wc_slots")
+    .select("id, weekday, start_time, end_time, capacity, is_open, display_order, wc_applications(count)")
+    .order("display_order", { ascending: true })
+    .order("weekday", { ascending: true })
+    .order("start_time", { ascending: true });
   if (error) throw error;
-  return (data || []).map(({ wc_registrations: regs, ...s }) => ({ ...s, taken: regs?.[0]?.count || 0 }));
+  return (data || []).map(({ wc_applications: apps, ...s }) => ({ ...s, taken: apps?.[0]?.count || 0 }));
 }
 
-export async function createWcSessions(rows) {
+export async function createWcSlot(fields) {
   assertSupabase();
-  const { error } = await supabase.from("wc_sessions").insert(rows);
+  const { error } = await supabase.from("wc_slots").insert(fields);
   if (error) throw error;
 }
 
-export async function updateWcSession(id, fields) {
+export async function updateWcSlot(id, fields) {
   assertSupabase();
   const { error } = await supabase
-    .from("wc_sessions")
+    .from("wc_slots")
     .update({ ...fields, updated_at: new Date().toISOString() })
     .eq("id", id);
   if (error) throw error;
 }
 
-export async function deleteWcSession(id) {
+export async function deleteWcSlot(id) {
   assertSupabase();
-  const { error } = await supabase.from("wc_sessions").delete().eq("id", id);
+  const { error } = await supabase.from("wc_slots").delete().eq("id", id);
   if (error) throw error;
 }
 
-export async function fetchWcRegistrations(sessionId) {
+export async function fetchWcApplications(slotId) {
   assertSupabase();
   const { data, error } = await supabase
-    .from("wc_registrations")
-    .select("id, first_name, last_name, phone, email, level, source, created_at, member_id, members(member_code)")
-    .eq("session_id", sessionId)
+    .from("wc_applications")
+    .select("id, slot_id, first_name, last_name, phone, email, level, source, created_at, member_id, members(member_code)")
+    .eq("slot_id", slotId)
     .order("created_at", { ascending: true });
   if (error) throw error;
   return data || [];
 }
 
-export async function adminAddWcParticipant(sessionId, { firstName, lastName, phone, email, level }) {
+export async function adminAddWcApplicant(slotId, { firstName, lastName, phone, email, level }) {
   assertSupabase();
   const { error } = await supabase.rpc("wc_admin_add", {
-    p_session_id: sessionId,
+    p_slot_id: slotId,
     p_first_name: firstName,
     p_last_name: lastName,
     p_phone: phone,
@@ -97,8 +98,14 @@ export async function adminAddWcParticipant(sessionId, { firstName, lastName, ph
   if (error) throw error;
 }
 
-export async function removeWcParticipant(id) {
+export async function moveWcApplicant(applicationId, slotId) {
   assertSupabase();
-  const { error } = await supabase.from("wc_registrations").delete().eq("id", id);
+  const { error } = await supabase.rpc("wc_admin_move", { p_application_id: applicationId, p_slot_id: slotId });
+  if (error) throw error;
+}
+
+export async function removeWcApplicant(id) {
+  assertSupabase();
+  const { error } = await supabase.from("wc_applications").delete().eq("id", id);
   if (error) throw error;
 }

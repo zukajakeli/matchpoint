@@ -1,27 +1,29 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  fetchWcSessions,
-  createWcSessions,
-  updateWcSession,
-  deleteWcSession,
-  fetchWcRegistrations,
-  adminAddWcParticipant,
-  removeWcParticipant,
+  fetchWcSlotsAdmin,
+  createWcSlot,
+  updateWcSlot,
+  deleteWcSlot,
+  fetchWcApplications,
+  adminAddWcApplicant,
+  moveWcApplicant,
+  removeWcApplicant,
   wcErrorCode,
   WC_DEFAULT_CAPACITY,
   WC_LEVELS,
 } from "../../services/supabase/womensClubApi";
-import { buildWeek, isoToTbilisi, nextMonday, sessionParts, tbilisiToIso, validateWcForm } from "../../utils/womensClub";
+import { hhmm, slotTime, validateWcForm, weekdayName } from "../../utils/womensClub";
 import { formatPhone } from "../../utils/memberAnalytics";
+import { supabase } from "../../services/supabaseClient";
 import { SITE } from "../../seo/seo";
 import "./WomensClubAdmin.css";
 
-// Club → Women's Club. Staff can see the schedule and lists; only the
-// superadmin can change them (enforced by RLS and the wc_* functions).
+// Club → Women's Club. Fixed weekly time slots; each woman applies once
+// for one of them. Staff can see the slots and lists; only the superadmin
+// can change them (enforced by RLS and the wc_* database functions).
 
 const SHARE_URL = `${SITE.url}/womens-club`;
-const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const LEVEL_LABELS = {
   never: "Complete beginner",
   beginner: "Beginner",
@@ -30,112 +32,68 @@ const LEVEL_LABELS = {
 };
 const ERRORS = {
   NOT_ALLOWED: "Only the superadmin can change the women's club.",
-  SESSION_FULL: "This session is full. Raise its capacity first to add someone.",
-  ALREADY_REGISTERED: "Someone with this phone number or email is already registered for this session.",
+  SLOT_FULL: "This time slot is full. Raise its capacity first.",
+  ALREADY_APPLIED: "Someone with this phone number or email has already applied.",
   INVALID_PHONE: "Enter a valid phone number.",
   INVALID_EMAIL: "Enter a valid email address.",
   NAME_REQUIRED: "First and last name are required.",
   INVALID_LEVEL: "Choose a playing level.",
 };
+const label = (slot) => `${weekdayName(slot.weekday, "en")} ${slotTime(slot)}`;
 
 function errorText(err) {
   const msg = err?.message || String(err);
-  if (/wc_sessions|wc_registrations|wc_admin_add/.test(msg) && /does not exist|schema cache|Could not find/i.test(msg)) {
-    return "The women's club tables are missing. Run supabase/migrations/2026-10-16_womens_club.sql in the Supabase SQL editor.";
+  if (/wc_slots|wc_applications|wc_admin|wc_slot_list/.test(msg) && /does not exist|schema cache|Could not find/i.test(msg)) {
+    return "The women's club tables are missing. Run supabase/migrations/2026-10-17_womens_club_slots.sql in the Supabase SQL editor.";
   }
+  if (err?.code === "23503") return "This time slot still has applicants. Move or remove them first.";
   return ERRORS[wcErrorCode(err)] || msg;
 }
 
-function weekKey(iso) {
-  const { date } = isoToTbilisi(iso);
-  const [y, m, d] = date.split("-").map(Number);
-  const day = new Date(Date.UTC(y, m - 1, d));
-  const back = (day.getUTCDay() + 6) % 7;
-  return new Date(Date.UTC(y, m - 1, d - back)).toISOString().slice(0, 10);
-}
-
-function formatWeek(monday) {
-  const start = new Date(`${monday}T12:00:00Z`);
-  const end = new Date(start.getTime() + 6 * 86400000);
-  const f = (d) => d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-  return `Week of ${f(start)} – ${f(end)}`;
-}
-
-function csv(rows) {
+function toCsv(rows, slotsById) {
   const esc = (v) => {
     const s = v == null ? "" : String(v);
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
-  const lines = rows.map((r, i) =>
-    [i + 1, r.first_name, r.last_name, formatPhone(r.phone), r.email, LEVEL_LABELS[r.level], r.members?.member_code, r.source, r.created_at?.slice(0, 16).replace("T", " ")]
-      .map(esc)
-      .join(",")
+  const lines = rows.map((r) =>
+    [
+      slotsById[r.slot_id] ? label(slotsById[r.slot_id]) : "",
+      r.first_name, r.last_name, formatPhone(r.phone), r.email, LEVEL_LABELS[r.level],
+      r.members?.member_code, r.source, r.created_at?.slice(0, 16).replace("T", " "),
+    ].map(esc).join(",")
   );
-  return "﻿" + ["#,First name,Last name,Phone,Email,Level,Member ID,Source,Registered (UTC)", ...lines].join("\r\n");
+  return "﻿" + ["Time slot,First name,Last name,Phone,Email,Level,Member ID,Source,Applied (UTC)", ...lines].join("\r\n");
 }
 
-// ── Week builder ─────────────────────────────────────────────────────
-function WeekBuilder({ existing, onCreated, setNotice }) {
-  const [weekStart, setWeekStart] = useState(nextMonday());
-  const [days, setDays] = useState([0, 1, 2, 3, 4]);
-  const [time, setTime] = useState("19:30");
-  const [capacity, setCapacity] = useState(WC_DEFAULT_CAPACITY);
-  const [busy, setBusy] = useState(false);
+function download(name, text) {
+  const blob = new Blob([text], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
 
-  const toggleDay = (d) => setDays((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]));
-
-  const create = async (e) => {
-    e.preventDefault();
-    if (!days.length) return setNotice({ type: "error", text: "Pick at least one day." });
-    const taken = new Set(existing.map((s) => new Date(s.starts_at).getTime()));
-    const rows = buildWeek(weekStart, days, time, Number(capacity)).filter((r) => !taken.has(new Date(r.starts_at).getTime()));
-    if (!rows.length) return setNotice({ type: "error", text: "Those sessions already exist." });
-    setBusy(true);
-    try {
-      await createWcSessions(rows);
-      setNotice({ type: "success", text: `${rows.length} session${rows.length === 1 ? "" : "s"} created.` });
-      onCreated();
-    } catch (err) {
-      setNotice({ type: "error", text: errorText(err) });
-    }
-    setBusy(false);
-  };
-
+function SlotFields({ draft, setDraft }) {
   return (
-    <form className="club-card wcA-builder" onSubmit={create}>
-      <h3>Create a week</h3>
-      <div className="wcA-builder-row">
-        <label>
-          Week starting (Monday)
-          <input type="date" value={weekStart} onChange={(e) => setWeekStart(e.target.value)} required />
-        </label>
-        <label>
-          Time
-          <input type="time" value={time} onChange={(e) => setTime(e.target.value)} required />
-        </label>
-        <label>
-          Places per session
-          <input type="number" min={1} max={500} value={capacity} onChange={(e) => setCapacity(e.target.value)} required />
-        </label>
-      </div>
-      <div className="wcA-days" role="group" aria-label="Days">
-        {WEEKDAYS.map((name, i) => (
-          <label key={name} className={`wcA-day ${days.includes(i) ? "on" : ""}`}>
-            <input type="checkbox" checked={days.includes(i)} onChange={() => toggleDay(i)} />
-            {name}
-          </label>
-        ))}
-      </div>
-      <p className="club-muted">Times are Tbilisi time. Days that already have a session at this time are skipped. Each session can be edited afterwards.</p>
-      <button type="submit" className="club-btn club-btn-primary" disabled={busy}>{busy ? "Creating…" : "Create sessions"}</button>
-    </form>
+    <>
+      <label>
+        Day
+        <select value={draft.weekday} onChange={(e) => setDraft({ ...draft, weekday: Number(e.target.value) })}>
+          {[1, 2, 3, 4, 5, 6, 7].map((d) => <option key={d} value={d}>{weekdayName(d, "en")}</option>)}
+        </select>
+      </label>
+      <label>From<input type="time" value={draft.start_time} onChange={(e) => setDraft({ ...draft, start_time: e.target.value })} required /></label>
+      <label>To<input type="time" value={draft.end_time} onChange={(e) => setDraft({ ...draft, end_time: e.target.value })} required /></label>
+      <label>Places<input type="number" min={1} max={500} value={draft.capacity} onChange={(e) => setDraft({ ...draft, capacity: e.target.value })} required /></label>
+    </>
   );
 }
 
-// ── Participants ─────────────────────────────────────────────────────
+// ── Applicants of one slot ───────────────────────────────────────────
 const EMPTY_PERSON = { firstName: "", lastName: "", phone: "", email: "", level: "never" };
 
-function Participants({ session, canEdit, clubBase, onChanged, setNotice }) {
+function Applicants({ slot, slots, canEdit, clubBase, onChanged, setNotice }) {
   const [rows, setRows] = useState(null);
   const [adding, setAdding] = useState(false);
   const [person, setPerson] = useState(EMPTY_PERSON);
@@ -143,27 +101,29 @@ function Participants({ session, canEdit, clubBase, onChanged, setNotice }) {
 
   const load = useCallback(async () => {
     try {
-      setRows(await fetchWcRegistrations(session.id));
+      setRows(await fetchWcApplications(slot.id));
     } catch (err) {
       setNotice({ type: "error", text: errorText(err) });
       setRows([]);
     }
-  }, [session.id, setNotice]);
+  }, [slot.id, setNotice]);
 
   useEffect(() => { load(); }, [load]);
 
   const add = async (e) => {
     e.preventDefault();
-    const errors = validateWcForm(person, { requireEmail: false, requireSession: false });
-    if (Object.keys(errors).length) {
-      return setNotice({ type: "error", text: ERRORS[{ firstName: "NAME_REQUIRED", lastName: "NAME_REQUIRED", phone: "INVALID_PHONE", email: "INVALID_EMAIL", level: "INVALID_LEVEL" }[Object.keys(errors)[0]]] });
+    const errors = validateWcForm(person, { requireEmail: false, requireSlot: false });
+    const first = Object.keys(errors)[0];
+    if (first) {
+      const code = { firstName: "NAME_REQUIRED", lastName: "NAME_REQUIRED", phone: "INVALID_PHONE", email: "INVALID_EMAIL", level: "INVALID_LEVEL" }[first];
+      return setNotice({ type: "error", text: ERRORS[code] });
     }
     setBusy(true);
     try {
-      await adminAddWcParticipant(session.id, person);
+      await adminAddWcApplicant(slot.id, person);
       setPerson(EMPTY_PERSON);
       setAdding(false);
-      setNotice({ type: "success", text: "Participant added and linked to the member database." });
+      setNotice({ type: "success", text: "Added and linked to the member database." });
       await load();
       onChanged();
     } catch (err) {
@@ -172,10 +132,11 @@ function Participants({ session, canEdit, clubBase, onChanged, setNotice }) {
     setBusy(false);
   };
 
-  const remove = async (row) => {
-    if (!confirm(`Remove ${row.first_name} ${row.last_name} from this session? Her place becomes available again.`)) return;
+  const move = async (row, slotId) => {
+    if (!slotId) return;
     try {
-      await removeWcParticipant(row.id);
+      await moveWcApplicant(row.id, slotId);
+      setNotice({ type: "success", text: `${row.first_name} moved to ${label(slots.find((s) => s.id === slotId))}.` });
       await load();
       onChanged();
     } catch (err) {
@@ -183,25 +144,30 @@ function Participants({ session, canEdit, clubBase, onChanged, setNotice }) {
     }
   };
 
-  const download = () => {
-    const { date, time } = isoToTbilisi(session.starts_at);
-    const blob = new Blob([csv(rows)], { type: "text/csv;charset=utf-8" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `womens-club-${date}-${time.replace(":", "")}.csv`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+  const remove = async (row) => {
+    if (!confirm(`Remove ${row.first_name} ${row.last_name}'s application? Her place becomes free and she can apply again.`)) return;
+    try {
+      await removeWcApplicant(row.id);
+      await load();
+      onChanged();
+    } catch (err) {
+      setNotice({ type: "error", text: errorText(err) });
+    }
   };
 
-  if (!rows) return <p className="club-muted wcA-pad">Loading participants…</p>;
+  if (!rows) return <p className="club-muted wcA-pad">Loading…</p>;
 
   return (
     <div className="wcA-participants">
       <div className="wcA-participants-bar">
-        <strong>{rows.length} registered</strong>
+        <strong>{rows.length} applied</strong>
         <span>
-          {rows.length > 0 && <button type="button" className="club-btn" onClick={download}>Export CSV</button>}
-          {canEdit && !adding && <button type="button" className="club-btn club-btn-primary" onClick={() => setAdding(true)}>+ Add participant</button>}
+          {rows.length > 0 && (
+            <button type="button" className="club-btn" onClick={() => download(`womens-club-${weekdayName(slot.weekday, "en").toLowerCase()}-${hhmm(slot.start_time).replace(":", "")}.csv`, toCsv(rows, { [slot.id]: slot }))}>
+              Export CSV
+            </button>
+          )}
+          {canEdit && !adding && <button type="button" className="club-btn club-btn-primary" onClick={() => setAdding(true)}>+ Add person</button>}
         </span>
       </div>
 
@@ -222,12 +188,12 @@ function Participants({ session, canEdit, clubBase, onChanged, setNotice }) {
       )}
 
       {rows.length === 0 ? (
-        <p className="club-muted wcA-pad">Nobody has registered yet.</p>
+        <p className="club-muted wcA-pad">Nobody has applied for this time yet.</p>
       ) : (
         <div className="club-table-wrap">
           <table className="club-table">
             <thead>
-              <tr><th>#</th><th>Name</th><th>Phone</th><th>Email</th><th>Level</th><th>Member</th><th>Registered</th>{canEdit && <th />}</tr>
+              <tr><th>#</th><th>Name</th><th>Phone</th><th>Email</th><th>Level</th><th>Member</th><th>Applied</th>{canEdit && <th />}</tr>
             </thead>
             <tbody>
               {rows.map((r, i) => (
@@ -239,7 +205,19 @@ function Participants({ session, canEdit, clubBase, onChanged, setNotice }) {
                   <td><span className={`wcA-level lv-${r.level}`}>{LEVEL_LABELS[r.level]}</span></td>
                   <td>{r.member_id ? <Link to={`${clubBase}/members/${r.member_id}`}>{r.members?.member_code || "Profile"}</Link> : "—"}</td>
                   <td className="nowrap">{new Date(r.created_at).toLocaleString("en-GB", { timeZone: "Asia/Tbilisi", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</td>
-                  {canEdit && <td><button type="button" className="club-btn wcA-danger" onClick={() => remove(r)}>Remove</button></td>}
+                  {canEdit && (
+                    <td className="nowrap">
+                      <select value="" onChange={(e) => move(r, e.target.value)} aria-label="Move to another time" className="wcA-move">
+                        <option value="">Move to…</option>
+                        {slots.filter((s) => s.id !== slot.id).map((s) => (
+                          <option key={s.id} value={s.id} disabled={s.taken >= s.capacity}>
+                            {label(s)}{s.taken >= s.capacity ? " (full)" : ""}
+                          </option>
+                        ))}
+                      </select>
+                      <button type="button" className="club-btn wcA-danger" onClick={() => remove(r)}>Remove</button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -250,27 +228,26 @@ function Participants({ session, canEdit, clubBase, onChanged, setNotice }) {
   );
 }
 
-// ── One session ──────────────────────────────────────────────────────
-function SessionRow({ session, canEdit, clubBase, onChanged, setNotice }) {
+// ── One slot ─────────────────────────────────────────────────────────
+function SlotRow({ slot, slots, canEdit, clubBase, onChanged, setNotice }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
-  const local = isoToTbilisi(session.starts_at);
-  const [draft, setDraft] = useState({ date: local.date, time: local.time, capacity: session.capacity, note: session.note || "" });
-  const past = new Date(session.starts_at) <= new Date();
-  const full = session.taken >= session.capacity;
-  const status = past ? "Past" : !session.is_open ? "Closed" : full ? "Full" : "Open";
-  const { weekday, day, time } = sessionParts(session.starts_at, "en");
+  const [draft, setDraft] = useState({
+    weekday: slot.weekday,
+    start_time: hhmm(slot.start_time),
+    end_time: hhmm(slot.end_time),
+    capacity: slot.capacity,
+  });
+  const full = slot.taken >= slot.capacity;
+  const status = !slot.is_open ? "Closed" : full ? "Full" : "Open";
+  const pct = Math.min(100, Math.round((slot.taken / slot.capacity) * 100));
 
   const save = async (e) => {
     e.preventDefault();
     try {
-      await updateWcSession(session.id, {
-        starts_at: tbilisiToIso(draft.date, draft.time),
-        capacity: Number(draft.capacity),
-        note: draft.note.trim() || null,
-      });
+      await updateWcSlot(slot.id, { ...draft, capacity: Number(draft.capacity), display_order: draft.weekday });
       setEditing(false);
-      setNotice({ type: "success", text: "Session updated." });
+      setNotice({ type: "success", text: "Time slot updated." });
       onChanged();
     } catch (err) {
       setNotice({ type: "error", text: errorText(err) });
@@ -279,7 +256,7 @@ function SessionRow({ session, canEdit, clubBase, onChanged, setNotice }) {
 
   const toggleOpen = async () => {
     try {
-      await updateWcSession(session.id, { is_open: !session.is_open });
+      await updateWcSlot(slot.id, { is_open: !slot.is_open });
       onChanged();
     } catch (err) {
       setNotice({ type: "error", text: errorText(err) });
@@ -287,29 +264,27 @@ function SessionRow({ session, canEdit, clubBase, onChanged, setNotice }) {
   };
 
   const remove = async () => {
-    const warn = session.taken ? ` Its ${session.taken} registration${session.taken === 1 ? "" : "s"} will be deleted too (the members stay in the club database).` : "";
-    if (!confirm(`Delete ${weekday} ${day}, ${time}?${warn}`)) return;
+    if (slot.taken) return setNotice({ type: "error", text: "This time slot still has applicants. Move or remove them first." });
+    if (!confirm(`Delete ${label(slot)}?`)) return;
     try {
-      await deleteWcSession(session.id);
+      await deleteWcSlot(slot.id);
       onChanged();
     } catch (err) {
       setNotice({ type: "error", text: errorText(err) });
     }
   };
 
-  const pct = Math.min(100, Math.round((session.taken / session.capacity) * 100));
-
   return (
     <li className={`wcA-session st-${status.toLowerCase()}`}>
       <div className="wcA-session-main">
         <button type="button" className="wcA-session-toggle" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
           <span className="wcA-when">
-            <strong>{weekday}, {day}</strong>
-            <span className="wcA-time">{time}</span>
+            <strong>{weekdayName(slot.weekday, "en")}</strong>
+            <span className="wcA-time">{slotTime(slot)}</span>
           </span>
           <span className="wcA-capacity">
             <span className="wcA-bar"><span style={{ width: `${pct}%` }} /></span>
-            <span>{session.taken} / {session.capacity}</span>
+            <span>{slot.taken} / {slot.capacity}</span>
           </span>
           <span className={`wcA-status st-${status.toLowerCase()}`}>{status}</span>
           <span className="wcA-chevron" aria-hidden="true">{open ? "▴" : "▾"}</span>
@@ -317,24 +292,18 @@ function SessionRow({ session, canEdit, clubBase, onChanged, setNotice }) {
         {canEdit && (
           <span className="wcA-actions">
             <button type="button" className="club-btn" onClick={() => setEditing((v) => !v)}>Edit</button>
-            {!past && (
-              <button type="button" className="club-btn" onClick={toggleOpen} title={session.is_open ? "Stop new registrations from the website" : "Allow registrations again"}>
-                {session.is_open ? "Close" : "Reopen"}
-              </button>
-            )}
+            <button type="button" className="club-btn" onClick={toggleOpen} title={slot.is_open ? "Stop new applications from the website" : "Accept applications again"}>
+              {slot.is_open ? "Close" : "Reopen"}
+            </button>
             <button type="button" className="club-btn wcA-danger" onClick={remove}>Delete</button>
           </span>
         )}
       </div>
-      {session.note && !editing && <p className="club-muted wcA-note">{session.note}</p>}
       {editing && (
         <form className="wcA-edit" onSubmit={save}>
-          <label>Date<input type="date" value={draft.date} onChange={(e) => setDraft({ ...draft, date: e.target.value })} required /></label>
-          <label>Time<input type="time" value={draft.time} onChange={(e) => setDraft({ ...draft, time: e.target.value })} required /></label>
-          <label>Places<input type="number" min={1} max={500} value={draft.capacity} onChange={(e) => setDraft({ ...draft, capacity: e.target.value })} required /></label>
-          <label className="wide">Note (staff only)<input value={draft.note} onChange={(e) => setDraft({ ...draft, note: e.target.value })} placeholder="e.g. coach: Nino" /></label>
-          {Number(draft.capacity) < session.taken && (
-            <p className="club-error wide">{session.taken} people are already registered; lowering the capacity below that won't remove anyone, it just closes the session.</p>
+          <SlotFields draft={draft} setDraft={setDraft} />
+          {Number(draft.capacity) < slot.taken && (
+            <p className="club-error wide">{slot.taken} people have already applied; a lower capacity won't remove anyone, it only stops new applications.</p>
           )}
           <span className="wcA-add-actions">
             <button type="submit" className="club-btn club-btn-primary">Save</button>
@@ -342,28 +311,26 @@ function SessionRow({ session, canEdit, clubBase, onChanged, setNotice }) {
           </span>
         </form>
       )}
-      {open && <Participants session={session} canEdit={canEdit} clubBase={clubBase} onChanged={onChanged} setNotice={setNotice} />}
+      {open && <Applicants slot={slot} slots={slots} canEdit={canEdit} clubBase={clubBase} onChanged={onChanged} setNotice={setNotice} />}
     </li>
   );
 }
 
 // ── Page ─────────────────────────────────────────────────────────────
 export default function WomensClubAdmin({ isSuperadmin, clubBase }) {
-  const [sessions, setSessions] = useState(null);
-  const [showPast, setShowPast] = useState(false);
+  const [slots, setSlots] = useState(null);
   const [notice, setNotice] = useState(null);
   const [copied, setCopied] = useState(false);
-  const [single, setSingle] = useState(null);
+  const [newSlot, setNewSlot] = useState(null);
 
   const load = useCallback(async () => {
     try {
-      const from = showPast ? undefined : new Date(Date.now() - 3 * 3600 * 1000).toISOString();
-      setSessions(await fetchWcSessions({ from }));
+      setSlots(await fetchWcSlotsAdmin());
     } catch (err) {
       setNotice({ type: "error", text: errorText(err) });
-      setSessions([]);
+      setSlots([]);
     }
-  }, [showPast]);
+  }, []);
 
   useEffect(() => { load(); }, [load]);
 
@@ -372,16 +339,6 @@ export default function WomensClubAdmin({ isSuperadmin, clubBase }) {
     const timer = setTimeout(() => setNotice(null), 4000);
     return () => clearTimeout(timer);
   }, [notice]);
-
-  const weeks = useMemo(() => {
-    const groups = new Map();
-    for (const s of sessions || []) {
-      const key = weekKey(s.starts_at);
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key).push(s);
-    }
-    return [...groups.entries()];
-  }, [sessions]);
 
   const copy = async () => {
     try {
@@ -393,23 +350,39 @@ export default function WomensClubAdmin({ isSuperadmin, clubBase }) {
     }
   };
 
-  const addSingle = async (e) => {
+  const addSlot = async (e) => {
     e.preventDefault();
     try {
-      await createWcSessions([{ starts_at: tbilisiToIso(single.date, single.time), capacity: Number(single.capacity) }]);
-      setSingle(null);
-      setNotice({ type: "success", text: "Session added." });
+      await createWcSlot({ ...newSlot, capacity: Number(newSlot.capacity), display_order: newSlot.weekday });
+      setNewSlot(null);
+      setNotice({ type: "success", text: "Time slot added." });
       load();
     } catch (err) {
       setNotice({ type: "error", text: errorText(err) });
     }
   };
 
+  const exportAll = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("wc_applications")
+        .select("slot_id, first_name, last_name, phone, email, level, source, created_at, members(member_code)")
+        .order("created_at");
+      if (error) throw error;
+      download("womens-club-applications.csv", toCsv(data || [], Object.fromEntries(slots.map((s) => [s.id, s]))));
+    } catch (err) {
+      setNotice({ type: "error", text: errorText(err) });
+    }
+  };
+
+  const total = (slots || []).reduce((sum, s) => sum + s.taken, 0);
+  const capacity = (slots || []).reduce((sum, s) => sum + s.capacity, 0);
+
   return (
     <div className="wcA">
       <div className="club-card wcA-share">
         <div>
-          <h3>Registration link</h3>
+          <h3>Application link</h3>
           <p className="club-muted">Share it in the WhatsApp group. The page isn't in the menus, the sitemap or search engines.</p>
         </div>
         <div className="wcA-link">
@@ -426,49 +399,47 @@ export default function WomensClubAdmin({ isSuperadmin, clubBase }) {
         </div>
       )}
 
-      {isSuperadmin && <WeekBuilder existing={sessions || []} onCreated={load} setNotice={setNotice} />}
-
       <div className="wcA-list-head">
-        <h3>Sessions</h3>
+        <h3>Time slots <span className="club-muted">· {total} of {capacity} places taken</span></h3>
         <span>
-          <label className="wcA-check">
-            <input type="checkbox" checked={showPast} onChange={(e) => setShowPast(e.target.checked)} /> Show past sessions
-          </label>
-          {isSuperadmin && !single && (
-            <button type="button" className="club-btn" onClick={() => setSingle({ date: nextMonday(), time: "19:30", capacity: WC_DEFAULT_CAPACITY })}>
-              + Single session
+          {total > 0 && <button type="button" className="club-btn" onClick={exportAll}>Export all CSV</button>}
+          {isSuperadmin && !newSlot && (
+            <button type="button" className="club-btn" onClick={() => setNewSlot({ weekday: 1, start_time: "19:30", end_time: "21:00", capacity: WC_DEFAULT_CAPACITY })}>
+              + Add time slot
             </button>
           )}
         </span>
       </div>
+      <p className="club-muted wcA-hint">Each person can apply once, for one time slot. Removing someone frees her place and lets her apply again.</p>
 
-      {single && (
-        <form className="club-card wcA-edit" onSubmit={addSingle}>
-          <label>Date<input type="date" value={single.date} onChange={(e) => setSingle({ ...single, date: e.target.value })} required /></label>
-          <label>Time<input type="time" value={single.time} onChange={(e) => setSingle({ ...single, time: e.target.value })} required /></label>
-          <label>Places<input type="number" min={1} max={500} value={single.capacity} onChange={(e) => setSingle({ ...single, capacity: e.target.value })} required /></label>
+      {newSlot && (
+        <form className="club-card wcA-edit" onSubmit={addSlot}>
+          <SlotFields draft={newSlot} setDraft={setNewSlot} />
           <span className="wcA-add-actions">
-            <button type="submit" className="club-btn club-btn-primary">Add session</button>
-            <button type="button" className="club-btn" onClick={() => setSingle(null)}>Cancel</button>
+            <button type="submit" className="club-btn club-btn-primary">Add</button>
+            <button type="button" className="club-btn" onClick={() => setNewSlot(null)}>Cancel</button>
           </span>
         </form>
       )}
 
-      {sessions === null ? (
+      {slots === null ? (
         <p className="club-muted">Loading…</p>
-      ) : weeks.length === 0 ? (
-        <p className="club-empty">No upcoming sessions. {isSuperadmin ? "Create a week above." : ""}</p>
+      ) : slots.length === 0 ? (
+        <p className="club-empty">No time slots yet.</p>
       ) : (
-        weeks.map(([monday, list]) => (
-          <section key={monday} className="wcA-week">
-            <h4>{formatWeek(monday)}</h4>
-            <ul>
-              {list.map((s) => (
-                <SessionRow key={`${s.id}-${s.starts_at}-${s.capacity}`} session={s} canEdit={isSuperadmin} clubBase={clubBase} onChanged={load} setNotice={setNotice} />
-              ))}
-            </ul>
-          </section>
-        ))
+        <ul className="wcA-slots">
+          {slots.map((s) => (
+            <SlotRow
+              key={`${s.id}-${s.weekday}-${s.start_time}-${s.end_time}-${s.capacity}`}
+              slot={s}
+              slots={slots}
+              canEdit={isSuperadmin}
+              clubBase={clubBase}
+              onChanged={load}
+              setNotice={setNotice}
+            />
+          ))}
+        </ul>
       )}
     </div>
   );

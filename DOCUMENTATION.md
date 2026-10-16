@@ -205,12 +205,12 @@ Images uploaded in the admin are resized and compressed in the browser (WebP), s
 
 ### Women's Social Club (`/womens-club`)
 
-An unlisted registration page for the weekly women's sessions, shared by link (e.g. in WhatsApp). It isn't in the menus or the sitemap, and it's marked `noindex` in the page, in the pre-rendered HTML (`api/seo.js`) and through an `X-Robots-Tag` header (`vercel.json`). It is not password-protected.
+An unlisted application page for the women's club, shared by link (e.g. in WhatsApp). There is no booking and no payment. A woman sends her name, phone, email and playing level once, and chooses one of the fixed weekly time slots. The page isn't in the menus or the sitemap, and it's marked `noindex` in the page, in the pre-rendered HTML (`api/seo.js`) and through an `X-Robots-Tag` header (`vercel.json`). It is not password-protected.
 
-- **Setup:** run `supabase/migrations/2026-10-16_womens_club.sql` in the Supabase SQL editor (it is also part of `schema.sql`). No new services or secrets are needed.
-- **Admin:** Staff portal → Club → **Women's Club**. Staff can view sessions and participant lists. The superadmin can create a week (choose days, time and places), add single sessions, edit the date, time and capacity, close or reopen web registration, delete sessions, and add or remove participants. Removing someone frees the place immediately.
-- **Booking rules:** `wc_register()` locks the session row before checking the capacity, so simultaneous submissions can never overbook. The same phone or email can't register twice for one session. A connection can make at most 20 registrations per hour.
-- **Membership:** each registration is linked to the club member with the same phone number (normalised like `members.phone`), or failing that the same email. A new member is created only when neither matches. The member gets the `womens_club` tag (`members.tags`), which shows as a badge and a "Women's Club" group filter in the member directory.
+- **Setup:** run `supabase/migrations/2026-10-17_womens_club_slots.sql` in the Supabase SQL editor (it is also part of `schema.sql`). It replaces the dated sessions of `2026-10-16_womens_club.sql`; the old tables are dropped only if they are empty. It creates seven slots, each with 16 places: Monday–Friday 19:30–21:00, Saturday 17:30–19:00 and Sunday 12:30–14:00. No new services or secrets are needed.
+- **Admin:** Staff portal → Club → **Women's Club**. Staff can view the slots and applicant lists. The superadmin can edit a slot's day, time and places, close or reopen a slot, add or delete slots, add someone by hand, move someone to another slot, remove an application (which frees the place and lets her apply again) and export CSV.
+- **Rules:** `wc_apply()` locks the slot row before counting, so simultaneous submissions can never exceed the capacity. A phone number or email can apply only once in total (unique indexes on `wc_applications`). A connection can send at most 20 applications per hour.
+- **Membership:** each application is linked to the club member with the same phone number (normalised like `members.phone`), or failing that the same email. A new member is created only when neither matches. The member gets the `womens_club` tag (`members.tags`), which shows as a badge and a "Women's Club" group filter in the member directory.
 
 ## 5. Database Schema (Supabase)
 

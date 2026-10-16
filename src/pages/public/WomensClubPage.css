@@ -2,14 +2,15 @@
 .wc-page {
   min-height: 70vh;
   padding: 0 16px 48px;
-  background: linear-gradient(180deg, var(--mp-navy, #14243e) 0, var(--mp-navy, #14243e) 220px, var(--mp-off-white, #f4f5f7) 220px);
+  background: var(--mp-off-white, #f4f5f7);
   font-family: "Loos Extended", "DM Sans", "Noto Sans Georgian", system-ui, sans-serif;
 }
 
+/* Dark band that grows with its text; the card overlaps its bottom edge */
 .wc-hero {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 32px 4px 24px;
+  margin: 0 -16px;
+  padding: 32px max(20px, calc(50% - 320px)) 64px;
+  background: var(--mp-navy, #14243e);
   color: var(--mp-white, #fff);
 }
 
@@ -29,8 +30,9 @@
 }
 
 .wc-card {
+  position: relative;
   max-width: 640px;
-  margin: 0 auto;
+  margin: -40px auto 0;
   padding: 20px 16px 24px;
   border-radius: 20px;
   background: var(--mp-white, #fff);
@@ -133,15 +135,10 @@
   font-weight: 800;
 }
 
-.wc-session-date {
-  color: var(--mp-gray, #6b7280);
-  font-size: 0.9rem;
-}
-
 .wc-session-time {
   grid-area: time;
   color: var(--mp-navy, #14243e);
-  font-size: 1.35rem;
+  font-size: 1.15rem;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
@@ -174,7 +171,6 @@
 }
 
 .wc-session.is-disabled .wc-session-day,
-.wc-session.is-disabled .wc-session-date,
 .wc-session.is-disabled .wc-session-time {
   color: #9ca3af;
 }
@@ -279,8 +275,7 @@
   line-height: 1.45;
 }
 
-.wc-submit,
-.wc-secondary {
+.wc-submit {
   width: 100%;
   min-height: 54px;
   border: none;
@@ -303,20 +298,14 @@
   box-shadow: none;
 }
 
-.wc-submit:focus-visible,
-.wc-secondary:focus-visible {
+.wc-submit:focus-visible {
   outline: 3px solid var(--mp-lime, #d5f296);
   outline-offset: 2px;
 }
 
-.wc-secondary {
-  background: var(--mp-navy, #14243e);
-  color: var(--mp-white, #fff);
-}
-
 /* Confirmation */
 .wc-done {
-  margin-top: 32px;
+  margin-top: 32px !important;
   text-align: center;
 }
 
@@ -367,7 +356,7 @@
 
 .wc-done-time {
   color: var(--mp-lime, #d5f296);
-  font-size: 2rem;
+  font-size: 1.8rem;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
@@ -378,12 +367,9 @@
 }
 
 @media (min-width: 640px) {
-  .wc-page {
-    background: linear-gradient(180deg, var(--mp-navy, #14243e) 0, var(--mp-navy, #14243e) 260px, var(--mp-off-white, #f4f5f7) 260px);
-  }
-
   .wc-hero {
-    padding: 48px 4px 32px;
+    padding-top: 48px;
+    padding-bottom: 72px;
   }
 
   .wc-hero h1 {
