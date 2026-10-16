@@ -203,6 +203,16 @@ One-time setup:
 
 Images uploaded in the admin are resized and compressed in the browser (WebP), stored as data URLs like the existing products/events, and served from `/api/image?type=slide|gallery&id=…`.
 
+### Women's Social Club (`/womens-club`)
+
+Free weekly club sessions for women. Registration is on `/womens-club`, which is in the website menu and can be shared by link (e.g. in WhatsApp). It's an independent module: it never reserves tables, starts timers, creates bookings or takes payments.
+
+- **Setup:** run `supabase/migrations/2026-10-20_womens_club.sql` in the Supabase SQL editor (it is also part of `schema.sql`). No new services or secrets are needed.
+- **Data:** the club has its own tables, `womens_club_sessions` and `womens_club_registrations`, which hold the session, capacity, playing level and source. The only shared data is the membership database. Each registration references a member (`member_id`), and her name, phone and email are read from `members`, so edits there show in the club lists. The page shows the Monday–Sunday week of the next upcoming session.
+- **Membership:** `womens_club_register()` matches an existing member by phone number (normalised like `members.phone`), then by email. An existing member keeps her details and only gets an email added if she had none. A new member is created when neither matches. Every participant gets the `womens_club` label (`members.tags`), which shows in the member directory as a badge and as a "Women's Club" group filter.
+- **Rules (server-side):** the session row is locked before capacity is counted, so simultaneous registrations can't overbook. The same member can't register twice for one session. A connection can make at most 20 registrations per hour.
+- **Admin:** Staff portal → **Women's Club** (its own section in the top bar). Staff can view the sessions and lists. The superadmin can create a week, add, edit or delete sessions, change capacities, close or reopen registration, add or remove participants, and export CSV. Deleting a session removes only its club registrations.
+
 ## 5. Database Schema (Supabase)
 
 Run `supabase/schema.sql` in the Supabase SQL Editor to set up or recreate the schema. The file is idempotent (`CREATE IF NOT EXISTS`, `DROP POLICY IF EXISTS`, etc.).

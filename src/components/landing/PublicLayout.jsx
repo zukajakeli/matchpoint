@@ -19,6 +19,7 @@ export default function PublicLayout({ children, seo }) {
     { to: "/", label: t("nav_home") },
     { to: "/book", label: t("nav_book") },
     { to: "/events", label: t("nav_events") },
+    { to: "/womens-club", label: t("nav_womens_club") },
     { to: "/blog", label: t("nav_blog") },
     { to: "/contact", label: t("nav_contact") },
   ];

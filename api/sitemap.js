@@ -4,7 +4,7 @@
 import { SITE, escapeHtml } from "../src/seo/seo.js";
 import { selectRows } from "./_lib/supabase.js";
 
-const STATIC_PAGES = ["/", "/book", "/events", "/blog", "/contact", "/corporate-events", "/terms", "/privacy", "/refunds", "/payments"];
+const STATIC_PAGES = ["/", "/book", "/events", "/blog", "/contact", "/corporate-events", "/womens-club", "/terms", "/privacy", "/refunds", "/payments"];
 
 function entry(path, lastmod) {
   return `  <url><loc>${escapeHtml(SITE.url + path)}</loc>${

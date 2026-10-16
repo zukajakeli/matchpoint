@@ -17,6 +17,10 @@
       "destination": "/api/seo?type=page&key=corporate-events"
     },
     {
+      "source": "/womens-club",
+      "destination": "/api/seo?type=page&key=womens-club"
+    },
+    {
       "source": "/sitemap.xml",
       "destination": "/api/sitemap"
     },

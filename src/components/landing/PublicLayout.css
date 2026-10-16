@@ -79,6 +79,7 @@
 
 .mp-nav-link {
   text-decoration: none;
+  white-space: nowrap;
   color: rgba(255, 255, 255, 0.75);
   font-size: 0.9rem;
   font-weight: 600;
@@ -318,6 +319,33 @@
 
 .mp-mobile-menu {
   display: none;
+}
+
+/* Narrower desktops: tighten the bar so every item fits on one line */
+@media (min-width: 769px) and (max-width: 1240px) {
+  .mp-nav-link {
+    padding: 8px 10px;
+    font-size: 0.84rem;
+  }
+
+  .mp-header-inner {
+    gap: 8px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1080px) {
+  .mp-header-logo span {
+    display: none;
+  }
+
+  .mp-nav-link {
+    padding: 6px 7px;
+    font-size: 0.78rem;
+  }
+
+  .mp-nav-club-label {
+    display: none;
+  }
 }
 
 /* ── Responsive ──────────────────────────────────────────────────────── */
