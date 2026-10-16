@@ -5,6 +5,7 @@ import MemberProfile from "./MemberProfile";
 import ClubAnalytics from "./ClubAnalytics";
 import LoyaltySettings from "./LoyaltySettings";
 import AuditLog from "./AuditLog";
+import WomensClubAdmin from "./WomensClubAdmin";
 import "./ClubPage.css";
 
 // Club membership: member database for staff; analytics, loyalty rules,
@@ -17,6 +18,7 @@ export default function ClubPage({ basePath, isSuperadmin }) {
   const onMembers = pathname === clubBase || pathname.startsWith(`${clubBase}/members`);
   const tabs = [
     { to: clubBase, label: "Members", end: true },
+    { to: `${clubBase}/womens-club`, label: "Women's Club" },
     ...(isSuperadmin
       ? [
           { to: `${clubBase}/analytics`, label: "Analytics" },
@@ -48,6 +50,7 @@ export default function ClubPage({ basePath, isSuperadmin }) {
       <Routes>
         <Route index element={<MembersDirectory clubBase={clubBase} />} />
         <Route path="members/:memberId" element={<MemberProfile clubBase={clubBase} isSuperadmin={isSuperadmin} />} />
+        <Route path="womens-club" element={<WomensClubAdmin isSuperadmin={isSuperadmin} clubBase={clubBase} />} />
         {isSuperadmin && <Route path="analytics" element={<ClubAnalytics />} />}
         {isSuperadmin && <Route path="loyalty" element={<LoyaltySettings />} />}
         {isSuperadmin && <Route path="audit" element={<AuditLog />} />}

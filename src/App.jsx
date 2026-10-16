@@ -44,6 +44,7 @@ const BlogPostPage = React.lazy(() => import("./pages/public/BlogPostPage"));
 const EventsListPage = React.lazy(() => import("./pages/public/EventsListPage"));
 const EventDetailPage = React.lazy(() => import("./pages/public/EventDetailPage"));
 const CorporateEventsPage = React.lazy(() => import("./pages/public/CorporateEventsPage"));
+const WomensClubPage = React.lazy(() => import("./pages/public/WomensClubPage"));
 
 // ─── Staff portal (all internal pages, password-protected) ────────────────────
 // role: "superadmin" | "staff" — staff has limited nav & routes
@@ -300,6 +301,9 @@ function AppContent() {
 
           {/* Corporate events + inquiry form */}
           <Route path="/corporate-events" element={<CorporateEventsPage />} />
+
+          {/* Women's Social Club — unlisted, shared by link only */}
+          <Route path="/womens-club" element={<WomensClubPage />} />
 
           {/* Legal (required by the payment provider) */}
           <Route path="/terms" element={<LegalPage slug="terms" />} />
