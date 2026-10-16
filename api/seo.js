@@ -23,8 +23,6 @@ const PATHS = { blog: "/blog/", event: "/events/", product: "/services/", page: 
 // Static pages that have their own metadata (Georgian, the default language)
 const PAGES = {
   "corporate-events": () => corporateSeo(translations.ka.corp_title, translations.ka.corp_hero_sub),
-  // Unlisted: a proper WhatsApp link preview, but kept out of search results
-  "womens-club": () => pageSeo(translations.ka.wc_title, translations.ka.wc_intro, "/womens-club", { noindex: true, image: "/hero-tables.jpg" }),
 };
 
 const LOADERS = {

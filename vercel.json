@@ -17,27 +17,12 @@
       "destination": "/api/seo?type=page&key=corporate-events"
     },
     {
-      "source": "/womens-club",
-      "destination": "/api/seo?type=page&key=womens-club"
-    },
-    {
       "source": "/sitemap.xml",
       "destination": "/api/sitemap"
     },
     {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/womens-club",
-      "headers": [
-        {
-          "key": "X-Robots-Tag",
-          "value": "noindex, nofollow"
-        }
-      ]
     }
   ]
 }

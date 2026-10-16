@@ -17,7 +17,6 @@ import ProductsAdminPage from "./pages/ProductsAdminPage";
 import BlogAdminPage from "./pages/BlogAdminPage";
 import EventsAdminPage from "./pages/EventsAdminPage";
 import WebsiteAdminPage from "./pages/WebsiteAdminPage";
-import WomensClubAdminPage from "./pages/WomensClubAdminPage";
 import GlobalSoundButtons from "./components/GlobalSoundButtons";
 import HomeDashboard from "./components/HomeDashboard";
 import BookingNotifications from "./components/BookingNotifications";
@@ -45,7 +44,6 @@ const BlogPostPage = React.lazy(() => import("./pages/public/BlogPostPage"));
 const EventsListPage = React.lazy(() => import("./pages/public/EventsListPage"));
 const EventDetailPage = React.lazy(() => import("./pages/public/EventDetailPage"));
 const CorporateEventsPage = React.lazy(() => import("./pages/public/CorporateEventsPage"));
-const WomensClubPage = React.lazy(() => import("./pages/public/WomensClubPage"));
 
 // ─── Staff portal (all internal pages, password-protected) ────────────────────
 // role: "superadmin" | "staff" — staff has limited nav & routes
@@ -174,7 +172,6 @@ function StaffPortal({ role = "superadmin" }) {
           </Link>
           <Link className="nav-link" to={`${basePath}/table-view`}>Table View</Link>
           <Link className="nav-link" to={`${basePath}/club`}>Club</Link>
-          <Link className="nav-link" to={`${basePath}/womens-club`}>Women's Club</Link>
           {isSuperadmin && <Link className="nav-link" to={`${basePath}/products`}>Products</Link>}
           {isSuperadmin && <Link className="nav-link" to={`${basePath}/blog`}>Blog</Link>}
           {isSuperadmin && <Link className="nav-link" to={`${basePath}/events`}>Events</Link>}
@@ -229,7 +226,6 @@ function StaffPortal({ role = "superadmin" }) {
           <Route path={`${basePath}/menu`} element={<MenuAdminPage />} />
           <Route path={`${basePath}/bookings`} element={<BookingsPage />} />
           <Route path={`${basePath}/table-view`} element={<TableViewPage tables={tables} />} />
-          <Route path={`${basePath}/womens-club`} element={<WomensClubAdminPage isSuperadmin={isSuperadmin} />} />
           <Route path={`${basePath}/club/*`} element={<ClubPage basePath={basePath} isSuperadmin={isSuperadmin} />} />
           {isSuperadmin && <Route path={`${basePath}/sales`} element={<SalesSettingsPage />} />}
           {isSuperadmin && <Route path={`${basePath}/products`} element={<ProductsAdminPage />} />}
@@ -304,9 +300,6 @@ function AppContent() {
 
           {/* Corporate events + inquiry form */}
           <Route path="/corporate-events" element={<CorporateEventsPage />} />
-
-          {/* Women's Social Club — unlisted, shared by link only */}
-          <Route path="/womens-club" element={<WomensClubPage />} />
 
           {/* Legal (required by the payment provider) */}
           <Route path="/terms" element={<LegalPage slug="terms" />} />
