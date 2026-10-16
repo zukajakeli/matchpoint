@@ -35,7 +35,7 @@
   font-size: 0.9rem;
 }
 
-.wcA-link a.club-btn {
+.wcA-link a.admin-btn {
   text-decoration: none;
 }
 
@@ -292,4 +292,32 @@
 
 .wcA-pad {
   padding: 8px 0;
+}
+
+/* Standalone page (not part of Club): its own card and text styles */
+.wcA-card {
+  padding: 20px 22px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 16px rgba(20, 36, 62, 0.06);
+}
+
+.wcA-muted {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.wcA-error-text {
+  margin: 0;
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.wcA .admin-table td {
+  vertical-align: middle;
+}
+
+.wcA .admin-btn + .admin-btn {
+  margin-left: 0;
 }

@@ -1701,7 +1701,7 @@ $$;
 -- ('week' | 'month' | '30d' | 'year' | 'all') and a segment:
 --   new → highly_active → regular → at_risk → inactive → returning → one_time
 -- (first match wins; thresholds come from loyalty_settings.segments).
--- Dropped first because its result columns changed (tags was added).
+-- Dropped first so an older version with different columns is replaced.
 drop function if exists public.member_directory(text);
 create or replace function public.member_directory(p_period text default 'month')
 returns table (
@@ -1709,7 +1709,7 @@ returns table (
   status text, registered_at timestamptz,
   visits_period integer, visits_month integer, visits_year integer, visits_total integer,
   hours_period numeric, hours_total numeric, last_visit_at timestamptz,
-  points_balance integer, lifetime_points integer, segment text, tags text[]
+  points_balance integer, lifetime_points integer, segment text
 )
 language plpgsql stable security definer set search_path = '' as $$
 declare
@@ -1748,8 +1748,7 @@ begin
            or vs.last_v < now() - make_interval(days => coalesce((g ->> 'inactive_days')::int, 30)) then 'inactive'
       when vs.vt >= 2 then 'returning'
       else 'one_time'
-    end,
-    m.tags
+    end
   from public.members m
   cross join lateral (
     select
@@ -1985,14 +1984,13 @@ end $$;
 -- Applications from the unlisted /womens-club page. There is no booking
 -- and no payment: a woman applies once, choosing one of the fixed weekly
 -- time slots. Each slot takes a limited number of applications (16 by
--- default); a full slot can't be chosen. Every application is linked to
--- a club member (matched by phone, then email; created when there is
--- none) and the member gets the 'womens_club' tag. Places are counted
--- from the applications, so removing someone frees her place right away.
+-- default); a full slot can't be chosen. Applications are kept on their
+-- own and are not linked to club membership. Places are counted from the
+-- applications, so removing someone frees her place right away.
 
--- Free-form labels on members, e.g. 'womens_club'
-alter table public.members add column if not exists tags text[] not null default '{}';
-create index if not exists members_tags_idx on public.members using gin (tags);
+-- An earlier version tagged members and linked applications to them.
+drop index if exists public.members_tags_idx;
+alter table public.members drop column if exists tags;
 
 -- The first version used dated sessions (wc_sessions / wc_registrations).
 -- Remove them if they hold no registrations; otherwise leave them alone.
@@ -2044,7 +2042,6 @@ where not exists (select 1 from public.wc_slots);
 create table if not exists public.wc_applications (
   id uuid primary key default gen_random_uuid(),
   slot_id uuid not null references public.wc_slots(id) on delete restrict,
-  member_id uuid null references public.members(id) on delete set null,
   first_name text not null,
   last_name text not null,
   phone text not null unique, -- normalised like members.phone
@@ -2054,6 +2051,7 @@ create table if not exists public.wc_applications (
   ip_hash text, -- for the per-connection rate limit only
   created_at timestamptz not null default now()
 );
+alter table public.wc_applications drop column if exists member_id;
 create unique index if not exists wc_applications_email_key on public.wc_applications (email) where email is not null;
 create index if not exists wc_applications_slot on public.wc_applications (slot_id);
 create index if not exists wc_applications_ip_recent on public.wc_applications (ip_hash, created_at desc);
@@ -2090,7 +2088,7 @@ $$;
 -- Shared by the public form and the admin. The slot row is locked first,
 -- so applications for one slot run one at a time and the capacity check
 -- can't be raced. The unique phone/email indexes stop the same person
--- applying to two slots at the same moment.
+-- applying to two slots at the same moment. Not linked to club members.
 create or replace function public.wc_add_application(
   p_slot_id uuid,
   p_first_name text,
@@ -2108,7 +2106,6 @@ declare
   v_last text := trim(coalesce(p_last_name, ''));
   v_phone text := public.normalize_phone(p_phone);
   v_email text := nullif(lower(trim(coalesce(p_email, ''))), '');
-  v_member_id uuid;
   v_taken integer;
   v_app public.wc_applications;
 begin
@@ -2146,32 +2143,9 @@ begin
     raise exception 'SLOT_FULL';
   end if;
 
-  -- The club member with this phone, or else this email
-  select id into v_member_id from public.members where phone = v_phone;
-  if v_member_id is null and v_email is not null then
-    select id into v_member_id from public.members where email = v_email order by registered_at limit 1;
-  end if;
-
   begin
-    if v_member_id is null then
-      insert into public.members (first_name, last_name, phone, email, home_branch_id, tags)
-      values (v_first, v_last, v_phone, v_email, 'main', array['womens_club'])
-      returning id into v_member_id;
-    end if;
-
-    update public.members m set
-      tags = case when 'womens_club' = any(m.tags) then m.tags else array_append(m.tags, 'womens_club') end,
-      email = case
-        when m.email is null and v_email is not null
-             and not exists (select 1 from public.members o where o.email = v_email and o.id <> m.id)
-          then v_email
-        else m.email
-      end
-    where m.id = v_member_id
-      and (not ('womens_club' = any(m.tags)) or (m.email is null and v_email is not null));
-
-    insert into public.wc_applications (slot_id, member_id, first_name, last_name, phone, email, level, source, ip_hash)
-    values (p_slot_id, v_member_id, v_first, v_last, v_phone, v_email, p_level, p_source, p_ip_hash)
+    insert into public.wc_applications (slot_id, first_name, last_name, phone, email, level, source, ip_hash)
+    values (p_slot_id, v_first, v_last, v_phone, v_email, p_level, p_source, p_ip_hash)
     returning * into v_app;
   exception when unique_violation then
     -- the same person applied a moment ago, from another tab or slot

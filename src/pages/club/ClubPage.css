@@ -606,21 +606,3 @@ label.club-check {
     flex-direction: column;
   }
 }
-
-/* Member groups (members.tags) */
-.club-tag {
-  display: inline-block;
-  margin-left: 6px;
-  padding: 1px 7px;
-  border-radius: 999px;
-  background: #e5e7eb;
-  color: #374151;
-  font-size: 0.7rem;
-  font-weight: 700;
-  vertical-align: middle;
-}
-
-.club-tag.tag-womens_club {
-  background: #fce7f3;
-  color: #9d174d;
-}

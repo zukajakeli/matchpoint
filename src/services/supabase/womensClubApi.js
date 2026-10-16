@@ -1,13 +1,12 @@
 // Women's Social Club: one application per person, for one of the fixed
-// weekly time slots (no booking, no payment). The public page only calls
-// wc_slot_list() and wc_apply(); the admin reads the tables directly
-// (RLS: staff read, superadmin write).
+// weekly time slots (no booking, no payment, not linked to club
+// membership). The public page only calls wc_slot_list() and wc_apply();
+// the admin reads the tables directly (RLS: staff read, superadmin write).
 
 import { supabase } from "../supabaseClient";
 import { assertSupabase } from "./assertSupabase";
 
 export const WC_LEVELS = ["never", "beginner", "intermediate", "advanced"];
-export const WC_TAG = "womens_club";
 export const WC_DEFAULT_CAPACITY = 16;
 
 // Database errors arrive as "CODE"; keep only the code.
@@ -78,7 +77,7 @@ export async function fetchWcApplications(slotId) {
   assertSupabase();
   const { data, error } = await supabase
     .from("wc_applications")
-    .select("id, slot_id, first_name, last_name, phone, email, level, source, created_at, member_id, members(member_code)")
+    .select("id, slot_id, first_name, last_name, phone, email, level, source, created_at")
     .eq("slot_id", slotId)
     .order("created_at", { ascending: true });
   if (error) throw error;

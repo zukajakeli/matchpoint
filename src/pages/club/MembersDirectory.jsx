@@ -17,14 +17,11 @@ const COLUMNS = [
   { key: "segment", label: "Segment" },
 ];
 
-// members.tags → label shown in the directory
-const TAG_LABELS = { womens_club: "Women's Club" };
-
 function toCsv(rows) {
   const headers = [
     "Member ID", "First name", "Last name", "Phone", "Email", "Status", "Registered",
     "Visits (period)", "Visits this month", "Visits this year", "Total visits",
-    "Hours (period)", "Hours total", "Last visit", "Points", "Lifetime points", "Segment", "Tags",
+    "Hours (period)", "Hours total", "Last visit", "Points", "Lifetime points", "Segment",
   ];
   const escape = (value) => {
     const text = value === null || value === undefined ? "" : String(value);
@@ -36,7 +33,6 @@ function toCsv(rows) {
       m.registered_at?.slice(0, 10), m.visits_period, m.visits_month, m.visits_year,
       m.visits_total, m.hours_period, m.hours_total, m.last_visit_at?.slice(0, 10),
       m.points_balance, m.lifetime_points, SEGMENT_LABELS[m.segment] || m.segment,
-      (m.tags || []).map((tag) => TAG_LABELS[tag] || tag).join("; "),
     ].map(escape).join(",")
   );
   // BOM so Excel opens Georgian names correctly
@@ -52,7 +48,6 @@ export default function MembersDirectory({ clubBase }) {
   const [search, setSearch] = useState("");
   const [segment, setSegment] = useState("all");
   const [status, setStatus] = useState("active");
-  const [tag, setTag] = useState("all");
   // Most active first by default
   const [sort, setSort] = useState({ key: "visits_period", dir: "desc" });
   const [isRegistering, setIsRegistering] = useState(false);
@@ -81,7 +76,6 @@ export default function MembersDirectory({ clubBase }) {
     return rows
       .filter((m) => status === "all" || m.status === status)
       .filter((m) => segment === "all" || m.segment === segment)
-      .filter((m) => tag === "all" || (m.tags || []).includes(tag))
       .filter((m) => {
         if (!q) return true;
         return (
@@ -98,7 +92,7 @@ export default function MembersDirectory({ clubBase }) {
         // ties: most recent visitor first
         return (sort.dir === "asc" ? cmp : -cmp) || String(b.last_visit_at || "").localeCompare(String(a.last_visit_at || ""));
       });
-  }, [rows, search, segment, status, sort, tag]);
+  }, [rows, search, segment, status, sort]);
 
   const segmentCounts = useMemo(() => {
     const counts = {};
@@ -141,12 +135,6 @@ export default function MembersDirectory({ clubBase }) {
           <option value="suspended">Suspended</option>
           <option value="cancelled">Cancelled</option>
           <option value="all">All statuses</option>
-        </select>
-        <select value={tag} onChange={(e) => setTag(e.target.value)} aria-label="Group">
-          <option value="all">All groups</option>
-          {Object.entries(TAG_LABELS).map(([key, label]) => (
-            <option key={key} value={key}>{label}</option>
-          ))}
         </select>
         <button type="button" className="club-btn" onClick={exportCsv} disabled={visible.length === 0}>
           Export CSV
@@ -221,12 +209,7 @@ export default function MembersDirectory({ clubBase }) {
               visible.map((m) => (
                 <tr key={m.id} onClick={() => navigate(`${clubBase}/members/${m.id}`)} className="club-row">
                   <td>
-                    <div className="club-member-name">
-                      {m.first_name} {m.last_name}
-                      {(m.tags || []).map((t) => (
-                        <span key={t} className={`club-tag tag-${t}`}>{TAG_LABELS[t] || t}</span>
-                      ))}
-                    </div>
+                    <div className="club-member-name">{m.first_name} {m.last_name}</div>
                     <div className="club-member-code">{m.member_code}</div>
                   </td>
                   <td className="nowrap">{formatPhone(m.phone)}</td>

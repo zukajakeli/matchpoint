@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import {
   fetchWcSlotsAdmin,
   createWcSlot,
@@ -12,15 +11,17 @@ import {
   wcErrorCode,
   WC_DEFAULT_CAPACITY,
   WC_LEVELS,
-} from "../../services/supabase/womensClubApi";
-import { hhmm, slotTime, validateWcForm, weekdayName } from "../../utils/womensClub";
-import { formatPhone } from "../../utils/memberAnalytics";
-import { supabase } from "../../services/supabaseClient";
-import { SITE } from "../../seo/seo";
-import "./WomensClubAdmin.css";
+} from "../services/supabase/womensClubApi";
+import { hhmm, slotTime, validateWcForm, weekdayName } from "../utils/womensClub";
+import { formatPhone } from "../utils/memberAnalytics";
+import { supabase } from "../services/supabaseClient";
+import { SITE } from "../seo/seo";
+import "./AdminPages.css";
+import "./WomensClubAdminPage.css";
 
-// Club → Women's Club. Fixed weekly time slots; each woman applies once
-// for one of them. Staff can see the slots and lists; only the superadmin
+// Staff portal → Women's Club. Fixed weekly time slots; each woman applies
+// once for one of them. Applications are kept on their own, separate from
+// club membership. Staff can see the slots and lists; only the superadmin
 // can change them (enforced by RLS and the wc_* database functions).
 
 const SHARE_URL = `${SITE.url}/womens-club`;
@@ -59,7 +60,7 @@ function toCsv(rows, slotsById) {
     [
       slotsById[r.slot_id] ? label(slotsById[r.slot_id]) : "",
       r.first_name, r.last_name, formatPhone(r.phone), r.email, LEVEL_LABELS[r.level],
-      r.members?.member_code, r.source, r.created_at?.slice(0, 16).replace("T", " "),
+      r.source, r.created_at?.slice(0, 16).replace("T", " "),
     ].map(esc).join(",")
   );
   return "﻿" + ["Time slot,First name,Last name,Phone,Email,Level,Member ID,Source,Applied (UTC)", ...lines].join("\r\n");
@@ -93,7 +94,7 @@ function SlotFields({ draft, setDraft }) {
 // ── Applicants of one slot ───────────────────────────────────────────
 const EMPTY_PERSON = { firstName: "", lastName: "", phone: "", email: "", level: "never" };
 
-function Applicants({ slot, slots, canEdit, clubBase, onChanged, setNotice }) {
+function Applicants({ slot, slots, canEdit, onChanged, setNotice }) {
   const [rows, setRows] = useState(null);
   const [adding, setAdding] = useState(false);
   const [person, setPerson] = useState(EMPTY_PERSON);
@@ -123,7 +124,7 @@ function Applicants({ slot, slots, canEdit, clubBase, onChanged, setNotice }) {
       await adminAddWcApplicant(slot.id, person);
       setPerson(EMPTY_PERSON);
       setAdding(false);
-      setNotice({ type: "success", text: "Added and linked to the member database." });
+      setNotice({ type: "success", text: "Added." });
       await load();
       onChanged();
     } catch (err) {
@@ -155,7 +156,7 @@ function Applicants({ slot, slots, canEdit, clubBase, onChanged, setNotice }) {
     }
   };
 
-  if (!rows) return <p className="club-muted wcA-pad">Loading…</p>;
+  if (!rows) return <p className="wcA-muted wcA-pad">Loading…</p>;
 
   return (
     <div className="wcA-participants">
@@ -163,11 +164,11 @@ function Applicants({ slot, slots, canEdit, clubBase, onChanged, setNotice }) {
         <strong>{rows.length} applied</strong>
         <span>
           {rows.length > 0 && (
-            <button type="button" className="club-btn" onClick={() => download(`womens-club-${weekdayName(slot.weekday, "en").toLowerCase()}-${hhmm(slot.start_time).replace(":", "")}.csv`, toCsv(rows, { [slot.id]: slot }))}>
+            <button type="button" className="admin-btn admin-btn-sm" onClick={() => download(`womens-club-${weekdayName(slot.weekday, "en").toLowerCase()}-${hhmm(slot.start_time).replace(":", "")}.csv`, toCsv(rows, { [slot.id]: slot }))}>
               Export CSV
             </button>
           )}
-          {canEdit && !adding && <button type="button" className="club-btn club-btn-primary" onClick={() => setAdding(true)}>+ Add person</button>}
+          {canEdit && !adding && <button type="button" className="admin-btn admin-btn-sm admin-btn-primary" onClick={() => setAdding(true)}>+ Add person</button>}
         </span>
       </div>
 
@@ -181,19 +182,19 @@ function Applicants({ slot, slots, canEdit, clubBase, onChanged, setNotice }) {
             {WC_LEVELS.map((l) => <option key={l} value={l}>{LEVEL_LABELS[l]}</option>)}
           </select>
           <span className="wcA-add-actions">
-            <button type="submit" className="club-btn club-btn-primary" disabled={busy}>{busy ? "Adding…" : "Add"}</button>
-            <button type="button" className="club-btn" onClick={() => setAdding(false)}>Cancel</button>
+            <button type="submit" className="admin-btn admin-btn-sm admin-btn-primary" disabled={busy}>{busy ? "Adding…" : "Add"}</button>
+            <button type="button" className="admin-btn admin-btn-sm" onClick={() => setAdding(false)}>Cancel</button>
           </span>
         </form>
       )}
 
       {rows.length === 0 ? (
-        <p className="club-muted wcA-pad">Nobody has applied for this time yet.</p>
+        <p className="wcA-muted wcA-pad">Nobody has applied for this time yet.</p>
       ) : (
-        <div className="club-table-wrap">
-          <table className="club-table">
+        <div className="admin-table-wrapper">
+          <table className="admin-table">
             <thead>
-              <tr><th>#</th><th>Name</th><th>Phone</th><th>Email</th><th>Level</th><th>Member</th><th>Applied</th>{canEdit && <th />}</tr>
+              <tr><th>#</th><th>Name</th><th>Phone</th><th>Email</th><th>Level</th><th>Applied</th>{canEdit && <th />}</tr>
             </thead>
             <tbody>
               {rows.map((r, i) => (
@@ -203,7 +204,6 @@ function Applicants({ slot, slots, canEdit, clubBase, onChanged, setNotice }) {
                   <td className="nowrap"><a href={`tel:+${r.phone}`}>{formatPhone(r.phone)}</a></td>
                   <td>{r.email ? <a href={`mailto:${r.email}`}>{r.email}</a> : "—"}</td>
                   <td><span className={`wcA-level lv-${r.level}`}>{LEVEL_LABELS[r.level]}</span></td>
-                  <td>{r.member_id ? <Link to={`${clubBase}/members/${r.member_id}`}>{r.members?.member_code || "Profile"}</Link> : "—"}</td>
                   <td className="nowrap">{new Date(r.created_at).toLocaleString("en-GB", { timeZone: "Asia/Tbilisi", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</td>
                   {canEdit && (
                     <td className="nowrap">
@@ -215,7 +215,7 @@ function Applicants({ slot, slots, canEdit, clubBase, onChanged, setNotice }) {
                           </option>
                         ))}
                       </select>
-                      <button type="button" className="club-btn wcA-danger" onClick={() => remove(r)}>Remove</button>
+                      <button type="button" className="admin-btn admin-btn-sm admin-btn-danger" onClick={() => remove(r)}>Remove</button>
                     </td>
                   )}
                 </tr>
@@ -229,7 +229,7 @@ function Applicants({ slot, slots, canEdit, clubBase, onChanged, setNotice }) {
 }
 
 // ── One slot ─────────────────────────────────────────────────────────
-function SlotRow({ slot, slots, canEdit, clubBase, onChanged, setNotice }) {
+function SlotRow({ slot, slots, canEdit, onChanged, setNotice }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({
@@ -291,11 +291,11 @@ function SlotRow({ slot, slots, canEdit, clubBase, onChanged, setNotice }) {
         </button>
         {canEdit && (
           <span className="wcA-actions">
-            <button type="button" className="club-btn" onClick={() => setEditing((v) => !v)}>Edit</button>
-            <button type="button" className="club-btn" onClick={toggleOpen} title={slot.is_open ? "Stop new applications from the website" : "Accept applications again"}>
+            <button type="button" className="admin-btn admin-btn-sm" onClick={() => setEditing((v) => !v)}>Edit</button>
+            <button type="button" className="admin-btn admin-btn-sm" onClick={toggleOpen} title={slot.is_open ? "Stop new applications from the website" : "Accept applications again"}>
               {slot.is_open ? "Close" : "Reopen"}
             </button>
-            <button type="button" className="club-btn wcA-danger" onClick={remove}>Delete</button>
+            <button type="button" className="admin-btn admin-btn-sm admin-btn-danger" onClick={remove}>Delete</button>
           </span>
         )}
       </div>
@@ -303,21 +303,21 @@ function SlotRow({ slot, slots, canEdit, clubBase, onChanged, setNotice }) {
         <form className="wcA-edit" onSubmit={save}>
           <SlotFields draft={draft} setDraft={setDraft} />
           {Number(draft.capacity) < slot.taken && (
-            <p className="club-error wide">{slot.taken} people have already applied; a lower capacity won't remove anyone, it only stops new applications.</p>
+            <p className="wcA-error-text wide">{slot.taken} people have already applied; a lower capacity won't remove anyone, it only stops new applications.</p>
           )}
           <span className="wcA-add-actions">
-            <button type="submit" className="club-btn club-btn-primary">Save</button>
-            <button type="button" className="club-btn" onClick={() => setEditing(false)}>Cancel</button>
+            <button type="submit" className="admin-btn admin-btn-sm admin-btn-primary">Save</button>
+            <button type="button" className="admin-btn admin-btn-sm" onClick={() => setEditing(false)}>Cancel</button>
           </span>
         </form>
       )}
-      {open && <Applicants slot={slot} slots={slots} canEdit={canEdit} clubBase={clubBase} onChanged={onChanged} setNotice={setNotice} />}
+      {open && <Applicants slot={slot} slots={slots} canEdit={canEdit} onChanged={onChanged} setNotice={setNotice} />}
     </li>
   );
 }
 
 // ── Page ─────────────────────────────────────────────────────────────
-export default function WomensClubAdmin({ isSuperadmin, clubBase }) {
+export default function WomensClubAdminPage({ isSuperadmin }) {
   const [slots, setSlots] = useState(null);
   const [notice, setNotice] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -366,7 +366,7 @@ export default function WomensClubAdmin({ isSuperadmin, clubBase }) {
     try {
       const { data, error } = await supabase
         .from("wc_applications")
-        .select("slot_id, first_name, last_name, phone, email, level, source, created_at, members(member_code)")
+        .select("slot_id, first_name, last_name, phone, email, level, source, created_at")
         .order("created_at");
       if (error) throw error;
       download("womens-club-applications.csv", toCsv(data || [], Object.fromEntries(slots.map((s) => [s.id, s]))));
@@ -379,16 +379,17 @@ export default function WomensClubAdmin({ isSuperadmin, clubBase }) {
   const capacity = (slots || []).reduce((sum, s) => sum + s.capacity, 0);
 
   return (
-    <div className="wcA">
-      <div className="club-card wcA-share">
+    <div className="admin-page wcA">
+      <h2>Women's Club</h2>
+      <div className="wcA-card wcA-share">
         <div>
           <h3>Application link</h3>
-          <p className="club-muted">Share it in the WhatsApp group. The page isn't in the menus, the sitemap or search engines.</p>
+          <p className="wcA-muted">Share it in the WhatsApp group. The page isn't in the menus, the sitemap or search engines.</p>
         </div>
         <div className="wcA-link">
           <code>{SHARE_URL}</code>
-          <button type="button" className="club-btn club-btn-primary" onClick={copy}>{copied ? "Copied ✓" : "Copy link"}</button>
-          <a className="club-btn" href="/womens-club" target="_blank" rel="noopener noreferrer">Open</a>
+          <button type="button" className="admin-btn admin-btn-sm admin-btn-primary" onClick={copy}>{copied ? "Copied ✓" : "Copy link"}</button>
+          <a className="admin-btn admin-btn-sm" href="/womens-club" target="_blank" rel="noopener noreferrer">Open</a>
         </div>
       </div>
 
@@ -400,32 +401,32 @@ export default function WomensClubAdmin({ isSuperadmin, clubBase }) {
       )}
 
       <div className="wcA-list-head">
-        <h3>Time slots <span className="club-muted">· {total} of {capacity} places taken</span></h3>
+        <h3>Time slots <span className="wcA-muted">· {total} of {capacity} places taken</span></h3>
         <span>
-          {total > 0 && <button type="button" className="club-btn" onClick={exportAll}>Export all CSV</button>}
+          {total > 0 && <button type="button" className="admin-btn admin-btn-sm" onClick={exportAll}>Export all CSV</button>}
           {isSuperadmin && !newSlot && (
-            <button type="button" className="club-btn" onClick={() => setNewSlot({ weekday: 1, start_time: "19:30", end_time: "21:00", capacity: WC_DEFAULT_CAPACITY })}>
+            <button type="button" className="admin-btn admin-btn-sm" onClick={() => setNewSlot({ weekday: 1, start_time: "19:30", end_time: "21:00", capacity: WC_DEFAULT_CAPACITY })}>
               + Add time slot
             </button>
           )}
         </span>
       </div>
-      <p className="club-muted wcA-hint">Each person can apply once, for one time slot. Removing someone frees her place and lets her apply again.</p>
+      <p className="wcA-muted wcA-hint">Each person can apply once, for one time slot. Removing someone frees her place and lets her apply again.</p>
 
       {newSlot && (
-        <form className="club-card wcA-edit" onSubmit={addSlot}>
+        <form className="wcA-card wcA-edit" onSubmit={addSlot}>
           <SlotFields draft={newSlot} setDraft={setNewSlot} />
           <span className="wcA-add-actions">
-            <button type="submit" className="club-btn club-btn-primary">Add</button>
-            <button type="button" className="club-btn" onClick={() => setNewSlot(null)}>Cancel</button>
+            <button type="submit" className="admin-btn admin-btn-sm admin-btn-primary">Add</button>
+            <button type="button" className="admin-btn admin-btn-sm" onClick={() => setNewSlot(null)}>Cancel</button>
           </span>
         </form>
       )}
 
       {slots === null ? (
-        <p className="club-muted">Loading…</p>
+        <p className="wcA-muted">Loading…</p>
       ) : slots.length === 0 ? (
-        <p className="club-empty">No time slots yet.</p>
+        <p className="admin-empty">No time slots yet.</p>
       ) : (
         <ul className="wcA-slots">
           {slots.map((s) => (
@@ -434,7 +435,6 @@ export default function WomensClubAdmin({ isSuperadmin, clubBase }) {
               slot={s}
               slots={slots}
               canEdit={isSuperadmin}
-              clubBase={clubBase}
               onChanged={load}
               setNotice={setNotice}
             />

@@ -142,7 +142,6 @@ export default function MemberProfile({ clubBase, isSuperadmin }) {
               <h2>
                 {member.first_name} {member.last_name}
                 <span className={`club-status status-${member.status}`}>{member.status}</span>
-                {(member.tags || []).includes("womens_club") && <span className="club-tag tag-womens_club">Women's Club</span>}
               </h2>
               <div className="club-profile-meta">
                 <span>{member.member_code}</span>
